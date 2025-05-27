@@ -66,3 +66,65 @@ h1 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
 }
+
+.footer {
+  background-color: #000;
+  color: #fff;
+  padding: 40px 20px 20px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.footer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer ul li {
+  margin: 8px 0;
+}
+
+.footer a {
+  color: #bbb;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  text-align: center;
+  border-top: 1px solid #444;
+  padding-top: 20px;
+  margin-top: 30px;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-socials a {
+  margin: 0 8px;
+  color: #bbb;
+  font-size: 1.2rem;
+  transition: color 0.3s;
+}
+
+.footer-socials a:hover {
+  color: #fff;
+}
