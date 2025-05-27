@@ -11,14 +11,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
 <body>
-  <header class="hero-section">
-    <img src="assets/main-background.jpeg" alt="Space Background" class="hero-bg" />
-    <div class="overlay"></div>
-    <div class="hero-content">
-      <h1>ExoAtlas Explorer</h1>
-      <a href="/live" class="cta-button">Live View</a>
+<!-- Sticky Navigation Header -->
+<nav class="site-header">
+  <div class="nav-container">
+    <div class="logo"><a href="/">ExoAtlas</a></div>
+    <div class="nav-links">
+      <a href="/" class="active">Home</a>
+      <a href="/about">About</a>
+      <a href="/data">Data</a>
+      <div class="dropdown">
+        <a href="/tools">Tools</a>
+        <div class="dropdown-content">
+          <a href="/epoch-calculator">Epoch Calculator</a>
+          <a href="/light-pollution-map">Light Pollution Map</a>
+        </div>
+      </div>
+      <a href="/updates">Product Updates</a>
     </div>
-  </header>
+    <div class="nav-cta">
+      <a href="/live">ExoAtlas Explorer</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<header class="hero-section">
+  <img src="assets/main-background.jpeg" alt="Space Background" class="hero-bg" />
+  <div class="overlay"></div>
+  <div class="hero-content">
+    <h1>ExoAtlas Explorer</h1>
+    <a href="/live" class="cta-button">Live View</a>
+  </div>
+</header>
 
 
   
