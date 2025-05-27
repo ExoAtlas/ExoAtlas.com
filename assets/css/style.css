@@ -1,3 +1,4 @@
+/* Base Styles */
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
@@ -5,6 +6,90 @@ body {
   background-color: black;
 }
 
+/* Navigation Header */
+.site-header {
+  background-color: #000;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 5px solid #000;
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo a {
+  font-size: 1.5rem;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  position: relative;
+}
+
+.nav-links a.active {
+  text-decoration: underline;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #111;
+  padding: 0.5rem 1rem;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  z-index: 999;
+}
+
+.dropdown-content a {
+  display: block;
+  padding: 0.5rem 0;
+  color: #fff;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.nav-cta a {
+  background-color: #ffffff;
+  color: black;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.nav-cta a:hover {
+  background-color: #ddd;
+}
+
+/* Hero Section */
 .hero-section {
   position: relative;
   height: 100vh;
@@ -56,6 +141,11 @@ h1 {
   border-radius: 4px;
 }
 
+.cta-button:hover {
+  background-color: #ddd;
+}
+
+/* Info Section */
 .info-section {
   padding: 4rem 1rem;
   background-color: #111;
@@ -67,11 +157,12 @@ h1 {
   margin-bottom: 1rem;
 }
 
+/* Footer */
 .footer {
   background-color: #000;
   color: #fff;
   padding: 40px 20px 20px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Segoe UI', sans-serif;
 }
 
 .footer-container {
