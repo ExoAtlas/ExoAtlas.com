@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ExoAtlas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css" />
   <script defer src="assets/js/main.js"></script>
 </head>
@@ -12,28 +12,48 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
 <body>
+
 <!-- Sticky Navigation Header -->
 <nav class="site-header">
-  <div class="nav-container">
-    <div class="logo"><a href="/">ExoAtlas</a></div>
-    <div class="nav-links">
-      <a href="/" class="active">Home</a>
-      <a href="/about">About</a>
-      <a href="/data">Data</a>
-      <div class="dropdown">
-        <a href="/tools">Tools</a>
-        <div class="dropdown-content">
-          <a href="/epoch-calculator">Epoch Calculator</a>
-          <a href="/light-pollution-map">Light Pollution Map</a>
+    <div class="nav-container">
+        <div class="logo"><a href="/">ExoAtlas</a></div>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/about">About</a>
+            <a href="/data">Data</a>
+            <div class="dropdown">
+                <a href="/tools">Tools</a>
+                <div class="dropdown-content">
+                    <a href="/epoch-calculator">Epoch Calculator</a>
+                    <a href="/light-pollution-map">Light Pollution Map</a>
+                </div>
+            </div>
+            <a href="/updates">Product Updates</a>
         </div>
-      </div>
-      <a href="/updates">Product Updates</a>
     </div>
     <div class="nav-cta">
-      <a href="/live">ExoAtlas Explorer</a>
+        <a href="/live">Live Solar System</a>
     </div>
-  </div>
-</nav>
+
+    <button class="hamburger-menu" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
+        <div class="hamburger-icon-wrapper"> <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </div>
+        <span class="hamburger-menu-text">Menu</span>
+    </button>
+
+</nav> <div class="mobile-nav-menu" id="mobileNavMenu">
+    <a href="/" class="active">Home</a>
+    <a href="/about">About</a>
+    <a href="/data">Data</a>
+    <span class="mobile-nav-parent-link">Tools</span>
+    <a href="/epoch-calculator" class="mobile-dropdown-item">Epoch Calculator</a>
+    <a href="/light-pollution-map" class="mobile-dropdown-item">Light Pollution Map</a>
+    <a href="/updates">Product Updates</a>
+    <a href="/live" class="mobile-nav-cta-item">Live Solar System</a>
+</div>
+
 
 <!-- Hero Section -->
 <header class="hero-section">
@@ -47,12 +67,13 @@
 
 
   
-  <section class="info-section">
+<section class="info-section">
+  <div class="info-section-content">
     <h3>Your gateway to the Solar System.</h3>
-    <p>
-      Explore the cosmos with ExoAtlas—an interactive platform offering real-time 3D visualizations of the Solar System, astronomical calculators, and educational tools powered by data from multiple reputable sources, including NASA JPL, the U.S. Space Force’s Unified Data Library, and more.
+    <p>Explore the cosmos with ExoAtlas—an interactive platform offering real-time 3D visualizations of the Solar System, astronomical calculators, and educational tools powered by data from multiple reputable sources, including NASA JPL, the U.S. Space Force’s Unified Data Library, and more.
     </p>
-  </section>
+  </div>
+</section>
 
   <!-- Global Footer -->
   <footer class="footer">
@@ -89,12 +110,12 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <p>© 2025 ExoAtlas LLC – All Rights Reserved</p>
     <div class="footer-socials">
       <a href="https://www.reddit.com/r/ExoAtlas/" target="_blank" aria-label="Reddit"><i class="fab fa-reddit"></i></a>
       <a href="https://www.instagram.com/exoatlasexplorer/" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
       <a href="https://x.com/ExoAtlasExplore" target="_blank" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
     </div>
+    <p>© 2025 ExoAtlas LLC – All Rights Reserved</p>
   </div>
 </footer>
   
