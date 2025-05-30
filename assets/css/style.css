@@ -12,44 +12,60 @@ body {
   background-color: #000;
   color: white;
   font-family: 'Poppins', sans-serif;
-  padding: 1rem 2rem;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 1000;
-  border-bottom: 5px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* This will space out .nav-container and .nav-cta */
+  max-width: 1700px; /* <<< CHANGE: Was 100vw, now explicitly set a common content width */
+  margin: 0 auto; /* <<< ADD: Center .site-header itself */
+  padding: 0.5em 3vw; /* This padding is now inside the 1200px max-width */
+  pointer-events: auto;
+  flex-wrap: nowrap;
+  /*border-bottom: 3px solid #333;*/
 }
 
 .nav-container {
   display: flex;
+  flex-wrap: nowrap;
+  flex-grow: 1; /* Allow this container to grow and take available space */
+  flex-shrink: 1; /* Allow it to shrink if needed (default) */
+  flex-basis: 0%; /* Let flex-grow primarily determine size after content */
+  line-height: 1;
   align-items: center;
-  justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
+  justify-content: space-between; /* This separates .logo and .nav-links within this container */
 }
 
 .logo a {
-  font-size: 1.75rem; /* Slightly larger */
+  font-size: 2.2rem;
+  font-weight: 500;
+  font-style: normal;
   color: white;
   text-decoration: none;
-  font-weight: 700;
 }
 
 .nav-links {
   display: flex;
-  gap: 1.5rem;
   align-items: center;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  gap: 1.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  white-space: nowrap;
 }
 
 .nav-links a {
   color: white;
   text-decoration: none;
-  font-size: 1.1rem; /* Slightly larger for readability */
-  font-weight: 500;
+  font-size: inherit;
+  font-weight: inherit;
   position: relative;
 }
 
 .nav-links a.active {
   text-decoration: underline;
+  text-underline-offset: 0.4em;
 }
 
 .dropdown {
@@ -60,42 +76,201 @@ body {
   display: none;
   position: absolute;
   background-color: #111;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0rem;
   top: 100%;
   left: 0;
   min-width: 200px;
-  z-index: 999;
+  z-index: 1001;
+  border-radius: 0 0 4px 4px; /* Optional: rounded corners for dropdown */
+  box-shadow: 0px 3px 5px rgba(0,0,0,0.2);
 }
 
 .dropdown-content a {
   display: block;
-  padding: 0.5rem 0;
+  padding: 0.5rem 1rem;
   color: #fff;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+ .dropdown-content a:hover {
+    background-color: #222; /* Hover effect for dropdown items */
 }
 
 .dropdown:hover .dropdown-content {
   display: block;
 }
 
+.nav-cta { /* Added this for clarity, ensure it doesn't shrink */
+    flex-shrink: 0; /* Prevent CTA from shrinking */
+}
+
 .nav-cta a {
-  background-color: #ffffff;
+  background-color: #FFFFFF;
   color: black;
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.4rem;
+  font-weight: 500;
   font-size: 1rem;
+  white-space: nowrap;
   transition: background 0.3s;
 }
 
 .nav-cta a:hover {
-  background-color: #ddd;
+  background-color: #dddddd;
 }
+
+
+
+/* Hamburger Menu Button (Hidden on Desktop) */
+.hamburger-menu {
+    display: none; /* Hidden by default, shown in media query */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px; /* Tappable area */
+    margin-left: 15px; /* Space from other elements if they were visible */
+    z-index: 1100; /* Ensure it's above other header content */
+}
+
+.hamburger-line {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: white; /* Or your header text color */
+    margin: 5px 0;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; /* For 'X' animation */
+}
+
+.hamburger-icon-wrapper {
+    /* This wrapper helps group the lines.
+       No specific styles needed by default unless you want to
+       control its size or spacing independently. */
+}
+
+.hamburger-menu-text {
+    display: none; /* Hidden by default */
+    /* The color will be inherited from the .hamburger-menu button */
+    /* Font size and weight will also be inherited, or you can set them explicitly in the media query */
+}
+
+/* Mobile Navigation Menu (Hidden on Desktop) */
+.mobile-nav-menu {
+    display: none; /* Hidden by default */
+    position: absolute; /* Position relative to the viewport or a positioned ancestor */
+    top: 0; /* Will be adjusted by JS or positioned below header */
+    left: 0;
+    width: 100%;
+    height: 100vh; /* Full viewport height */
+    background-color: #0c0c0c; /* Dark background */
+    padding: 60px 20px 20px; /* Padding (top padding to clear header) */
+    z-index: 1050; /* Below hamburger if it needs to be on top, but above page content */
+    box-sizing: border-box;
+    overflow-y: auto; /* Allow scrolling if many items */
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(-100%); /* Start off-screen to the left */
+}
+
+.mobile-nav-menu.is-active {
+    display: block; /* Show the menu */
+    transform: translateX(0%); /* Slide in */
+}
+
+.mobile-nav-menu a,
+.mobile-nav-menu .mobile-nav-parent-link {
+    display: block;
+    color: white;
+    padding: 12px 15px;
+    text-decoration: none;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #222; /* Separator lines */
+}
+.mobile-nav-menu .mobile-nav-parent-link {
+    font-weight: 600; /* Make parent links like "Tools" bolder */
+    color: #aaa; /* Differentiate non-clickable headers if desired */
+}
+
+.mobile-nav-menu a:last-of-type {
+    border-bottom: none;
+}
+
+.mobile-nav-menu .mobile-dropdown-item {
+    padding-left: 30px; /* Indent sub-items */
+    font-size: 1rem;
+}
+
+.mobile-nav-menu .mobile-nav-cta-item {
+    background-color: white;
+    color: black !important; /* Ensure text color contrasts with white bg */
+    text-align: center;
+    border-radius: 4px;
+    margin: 20px 15px 0;
+    padding: 12px 15px;
+    font-weight: 600;
+    border-bottom: none; /* No border for the CTA button */
+}
+.mobile-nav-menu .mobile-nav-cta-item:hover {
+    background-color: #ddd;
+}
+
+@media (max-width: 850px) { /* Adjust breakpoint as needed */
+    .nav-links {
+        display: none; /* Hide the desktop navigation links */
+    }
+
+    .nav-cta {
+        display: none; /* Hide the desktop CTA button from the header bar */
+    }
+
+    .hamburger-menu {
+        display: flex; /* Use flexbox to align icon and text side-by-side */
+        align-items: center; /* Vertically center the icon and text */
+        background: none;
+        border: none;
+        color: white; /* This will set the color for the "Menu" text */
+        cursor: pointer;
+        padding: 10px;
+        /* You can use 'gap' if you want consistent spacing, or margin on the text span */
+        /* gap: 8px; */ /* Example space between icon and text */
+    }
+
+    .hamburger-menu-text {
+    display: inline; /* Make the "Menu" text visible */
+    margin-left: 8px; /* Space between the icon and the word "Menu" */
+    font-size: 1.6em; /* Optional: Adjust font size if needed, relative to button */
+    font-weight: 500; /* Optional: Ensure it's a readable weight */
+    }
+
+    .site-header {
+        /* Optional: Adjust padding for smaller screens */
+        padding: 0.8em 15px; /* e.g., 15px fixed horizontal padding */
+        /* justify-content: space-between; is already set and will now
+           space out the .nav-container (with logo) and the .hamburger-menu */
+    }
+
+    .nav-container {
+        gap: 0; /* Reset gap if only the logo is visible within it here */
+    }
+
+    /* Animation for hamburger to 'X' when menu is active */
+    .hamburger-menu.is-active .hamburger-icon-wrapper .hamburger-line:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+    }
+    .hamburger-menu.is-active .hamburger-icon-wrapper .hamburger-line:nth-child(2) {
+        opacity: 0;
+    }
+    .hamburger-menu.is-active .hamburger-icon-wrapper .hamburger-line:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+    }
+}
+
+
 
 /* Hero Section */
 .hero-section {
   position: relative;
-  height: 100vh;
+  height: 70vh;
   overflow: hidden;
   text-align: center;
 }
@@ -130,9 +305,9 @@ body {
 }
 
 h1 {
-  font-size: 4rem; /* Larger and bolder hero headline */
-  margin-bottom: 1.5rem;
-  font-weight: 700;
+  font-size: 5.5rem; /* Larger and bolder hero headline */
+  margin-bottom: 1.7rem;
+  font-weight: 500;
 }
 
 .cta-button {
@@ -140,7 +315,7 @@ h1 {
   background-color: #ffffff;
   color: black;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 600;
   text-decoration: none;
   border-radius: 6px;
@@ -153,14 +328,34 @@ h1 {
 
 /* Info Section */
 .info-section {
-  padding: 4rem 1rem;
-  background-color: #111;
-  text-align: center;
+  padding-top: 0.5rem;
+  padding-bottom: 1.5rem;
+  padding-left: 0;  /* Example: remove horizontal padding from the outer section */
+  padding-right: 0; /* Example: remove horizontal padding from the outer section */
+  background-color: white; /* This background will span the full width */
+  color: black;
+  text-align: center; /* This will help center the text within .info-section-content */
+}
+
+.info-section-content {
+  max-width: 1200px; /* Set your desired max-width, same as your header */
+  margin-left: auto;  /* Center the content block */
+  margin-right: auto; /* Center the content block */
+  padding-left: 1rem;  /* Horizontal padding for the content, inside the 1200px constraint */
+  padding-right: 1rem; /* Matches your original horizontal padding */
+  box-sizing: border-box; /* Ensures padding doesn't add to the max-width */
 }
 
 .info-section h3 {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+/* You might want to add styles for the paragraph if needed */
+.info-section p {
+  font-size: 1rem;
+  font-weight: 300;
   margin-bottom: 1rem;
 }
 
@@ -168,7 +363,7 @@ h1 {
 .footer {
   background-color: #000;
   color: #fff;
-  padding: 40px 20px 20px;
+  padding: 10px 20px 10px;
   font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
 }
@@ -186,6 +381,10 @@ h1 {
   font-weight: 600;
   margin-bottom: 10px;
   color: #ffffff;
+}
+
+.footer-bottom p {
+  margin: 0px;
 }
 
 .footer ul {
@@ -209,9 +408,9 @@ h1 {
 
 .footer-bottom {
   text-align: center;
-  border-top: 1px solid #444;
-  padding-top: 20px;
-  margin-top: 30px;
+  /*border-top: 1px solid #444;*/
+  padding-top: 0px;
+  margin-top: 0px;
   font-size: 0.85rem;
   display: flex;
   flex-direction: column;
@@ -221,7 +420,7 @@ h1 {
 .footer-socials a {
   margin: 0 8px;
   color: #bbb;
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   transition: color 0.3s;
 }
 
