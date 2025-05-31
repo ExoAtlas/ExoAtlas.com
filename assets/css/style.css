@@ -302,6 +302,22 @@ body {
   z-index: 3;
   top: 50%;
   transform: translateY(-50%);
+  text-align: center;
+}
+
+.hero-content h1 {
+  /* Existing styles (keep these) */
+  font-size: 5.5rem;
+  margin-bottom: 0rem;
+  font-weight: 500;
+  color: white; 
+  text-align: center; 
+  display: inline-block; /* This keeps the backdrop tight around the text */
+  background-color: rgba(255, 255, 255, 0.03); /* Semi-transparent white */
+  padding: 0.2rem 0.4rem; /* Adjust as needed, 'em' is relative to font size */
+  border-radius: 32px; /* Adjust as desired */
+  -webkit-backdrop-filter: blur(1.5px); /* For Safari browser compatibility */
+  backdrop-filter: blur(1.5px); /* Standard syntax. Adjust blur amount (e.g., 2px, 5px, 10px) */
 }
 
 h1 {
@@ -311,7 +327,7 @@ h1 {
 }
 
 .cta-button {
-  padding: 0.75em 2em;
+  padding: 0.4em 1.75em;
   background-color: #ffffff;
   color: black;
   border: none;
@@ -319,11 +335,16 @@ h1 {
   font-weight: 600;
   text-decoration: none;
   border-radius: 6px;
+  display: block;       /* Makes the button take its own line */
+  margin-top: 0.1rem;   /* Space between the H1 and this button, adjust as needed */
+  margin-left: auto;    /* Used with margin-right: auto to center a block element */
+  margin-right: auto;   /* Used with margin-left: auto to center a block element */
+  width: fit-content;   /* Makes the block-level button only as wide as its content + padding */
   transition: background-color 0.3s;
 }
 
 .cta-button:hover {
-  background-color: #ddd;
+  background-color: #ddddddce;
 }
 
 /* Info Section */
