@@ -474,6 +474,14 @@ section.page-not-found {
   width: 100%;
 }
 
+.not-found-image {
+  display: block; /* Allows margin auto to center it */
+  margin: 0 auto -60px auto; /* Centers the image and adds 20px margin at the bottom */
+  max-width: 50vw; /* Adjust as needed - prevents it from being too large */
+  width: 70%; /* Makes it responsive, will be 70% of its container up to max-width */
+  height: auto; /* Maintain aspect ratio */
+}
+
 .page-not-found-content {
   text-align: center; 
   max-width: 600px;
