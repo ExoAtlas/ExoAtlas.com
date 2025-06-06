@@ -16,6 +16,8 @@ h1 {
   font-weight: 500;
 }
 
+
+
 /* Navigation Header */
 .site-header {
   background-color: #000;
@@ -28,7 +30,6 @@ h1 {
   flex-shrink: 0;
 }
 
-/* New Inner Wrapper for Header Content */
 .site-header-inner {
   display: flex;
   align-items: center;
@@ -42,7 +43,6 @@ h1 {
   position: relative;
   box-sizing: border-box; 
 }
-
 
 
 
@@ -284,112 +284,6 @@ h1 {
 
 
 
-/* Hero Section */
-.hero-section {
-  position: relative;
-  height: 70vh;
-  overflow: hidden;
-  text-align: center;
-}
-
-.hero-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 49.2% 28.8%;
-  z-index: 1;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background: black;
-  opacity: 0.15;
-  z-index: 2;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 3;
-  top: 50%;
-  transform: translateY(-50%);
-  text-align: center;
-}
-
-.hero-content h1 {
-  font-size: 5.5rem;
-  margin-bottom: 0rem;
-  font-weight: 500;
-  color: white; 
-  text-align: center; 
-  display: inline-block;
-  background-color: rgba(255, 255, 255, 0.03); 
-  padding: 0.2rem 0.4rem; 
-  border-radius: 32px; 
-  -webkit-backdrop-filter: blur(1.5px); 
-  backdrop-filter: blur(1.5px); 
-}
-
-.cta-button {
-  padding: 0.4em 1.75em;
-  background-color: #ffffff;
-  color: black;
-  border: none;
-  font-size: 1.5rem;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 6px;
-  display: block;    
-  margin-top: 0.1rem;  
-  margin-left: auto; 
-  margin-right: auto; 
-  width: fit-content;   
-  transition: background-color 0.3s;
-}
-
-.cta-button:hover {
-  background-color: #ddddddb0;
-}
-
-/* Info Section */
-.info-section {
-  padding-top: 0.5rem;
-  padding-bottom: 1.5rem;
-  padding-left: 0; 
-  padding-right: 0; 
-  background-color: white; 
-  color: black;
-  text-align: center; 
-}
-
-.info-section-content {
-  max-width: 1200px;
-  margin-left: auto; 
-  margin-right: auto; 
-  padding-left: 1rem;  
-  padding-right: 1rem; 
-  box-sizing: border-box; 
-}
-
-.info-section h3 {
-  font-size: 2rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-}
-
-.info-section p {
-  font-size: 1rem;
-  font-weight: 300;
-  margin-bottom: 1rem;
-}
-
-
 /* Footer */
 .footer {
   background-color: #000;
@@ -460,51 +354,4 @@ h1 {
 
 .footer-socials a:hover {
   color: #fff;
-}
-
-/* This targets the <section class="page-not-found"> in your 404.html */
-section.page-not-found {
-  flex-grow: 1;           
-  display: flex;
-  flex-direction: column; 
-  align-items: center;     
-  justify-content: center; 
-  padding: 20px;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.not-found-image {
-  display: block; /* Allows margin auto to center it */
-  margin: 0 auto -60px auto; /* Centers the image and adds 20px margin at the bottom */
-  max-width: 50vw; /* Adjust as needed - prevents it from being too large */
-  width: 70%; /* Makes it responsive, will be 70% of its container up to max-width */
-  height: auto; /* Maintain aspect ratio */
-}
-
-.page-not-found-content {
-  text-align: center; 
-  max-width: 600px;
-}
-
-.page-not-found-content h3 {
-  font-size: 2.5rem;
-  font-weight: 500; 
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.page-not-found-content p {
-  font-size: 1.1rem; 
-  margin-bottom: 1rem;
-}
-
-.page-not-found-content p a {
-  color: #000000; 
-  text-decoration: underline;
-  font-weight: 500;
-}
-
-.page-not-found-content p a:hover {
-  color: #555555;
 }
