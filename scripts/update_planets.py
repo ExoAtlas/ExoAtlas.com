@@ -2,6 +2,7 @@ import requests
 import json
 import re
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -62,6 +63,11 @@ def parse_horizons_elements(response_text):
 def get_all_planet_data():
     all_planets_data = []
     
+    # Define the custom User-Agent header
+    headers = {
+        'User-Agent': 'ExoAtlas-PlanetData-Bot/1.0 (+https://exoatlas.com/contact)'
+    }
+    
     for objnum, info in PLANET_DATA.items():
         planet_name = info['name']
         planet_id = info['id']
@@ -74,8 +80,10 @@ def get_all_planet_data():
                 "START_TIME": START_TIME_STR, "STOP_TIME": STOP_TIME_STR, "STEP_SIZE": "1d",
                 "OUT_UNITS": "KM-S", "REF_PLANE": "ECLIPTIC"
             }
-            response = requests.get(API_URL, params=params)
+            # Add the headers to the request
+            response = requests.get(API_URL, params=params, headers=headers)
             response.raise_for_status()
+            
             parsed_elements = parse_horizons_elements(response.text)
             
             if parsed_elements:
@@ -92,11 +100,13 @@ def get_all_planet_data():
             
         except Exception as e:
             print(f"  - An error occurred while processing {planet_name}: {e}")
+        
+        # Add a 1-second delay to be respectful to the API
+        time.sleep(1)
 
     return all_planets_data
 
 if __name__ == "__main__":
-    # --- Report Generation Setup ---
     REPORT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
     original_stdout = sys.stdout
     
@@ -117,7 +127,6 @@ if __name__ == "__main__":
     finally:
         sys.stdout = original_stdout
 
-    # --- Final Console and Report Message ---
     final_message = ""
     if final_data and len(final_data) == len(PLANET_DATA):
         update_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
