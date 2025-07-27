@@ -45,4 +45,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5.0.1
         with:
           commit_message: "Automated daily update of planets.json at 0000 UTC."
-          file_pattern: 'public/data/json/planets.json'
+          file_pattern: 'public/data/json/planets.json scripts/reports/update_planets_report.txt'
