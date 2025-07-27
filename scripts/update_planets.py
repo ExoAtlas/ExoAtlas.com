@@ -1,12 +1,12 @@
 import requests
 import json
 import re
+import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # --- Configuration ---
 API_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
-# Physical constants are stored here
 PLANET_DATA = {
     "000100000": {"id": "199", "name": "Mercury",  "r": "2439.7", "μ": "22031.8685", "R_rate": "0.0000687", "R_lat": "61.45", "R_lon": "281.01"},
     "000200000": {"id": "299", "name": "Venus",    "r": "6051.8", "μ": "324858.592", "R_rate": "-0.0000148","R_lat": "67.16", "R_lon": "272.76"},
@@ -21,6 +21,7 @@ PLANET_DATA = {
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 OUTPUT_FILE_PATH = PROJECT_ROOT / "public" / "data" / "json" / "planets.json"
+REPORT_FILE_PATH = SCRIPT_DIR / "reports" / "update_planets_report.txt"
 
 START_TIME_DT = datetime.now(timezone.utc)
 STOP_TIME_DT = START_TIME_DT + timedelta(days=1)
@@ -30,12 +31,13 @@ STOP_TIME_STR = STOP_TIME_DT.strftime("%Y-%m-%d")
 def format_value(value_str, decimal_places=4):
     if value_str is None: return None
     try:
+        if '+-' in value_str:
+            value_str = value_str.split('+-')[0]
         formatted_str = f"{float(value_str):.{decimal_places}f}".rstrip('0').rstrip('.')
         return formatted_str if formatted_str else "0"
     except (ValueError, TypeError): return value_str
 
 def parse_horizons_elements(response_text):
-    """Parses ONLY the orbital elements from the HORIZONS text block."""
     match = re.search(r'\$\$SOE(.*)\$\$EOE', response_text, re.DOTALL)
     if not match: return None
         
@@ -55,13 +57,11 @@ def parse_horizons_elements(response_text):
     data['ω'] = format_value(values.get('W'), 4)
     data['ν'] = format_value(values.get('TA'), 4)
     data['epoch'] = lines[0].strip().split('=')[0].strip()
-
     return data
 
 def get_all_planet_data():
     all_planets_data = []
     
-    # Use the keys from PLANET_DATA to iterate
     for objnum, info in PLANET_DATA.items():
         planet_name = info['name']
         planet_id = info['id']
@@ -76,11 +76,9 @@ def get_all_planet_data():
             }
             response = requests.get(API_URL, params=params)
             response.raise_for_status()
-            
             parsed_elements = parse_horizons_elements(response.text)
             
             if parsed_elements:
-                # Combine parsed orbital elements with hard-coded physical data
                 final_planet_obj = {
                     "objnum": objnum, "category": "Planet", "name": planet_name,
                     "a": parsed_elements.get("a"), "i": parsed_elements.get("i"),
@@ -98,14 +96,35 @@ def get_all_planet_data():
     return all_planets_data
 
 if __name__ == "__main__":
-    print(f"Starting planetary data update...")
-    final_data = get_all_planet_data()
+    # --- Report Generation Setup ---
+    REPORT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    original_stdout = sys.stdout
     
+    final_data = None
+    try:
+        with open(REPORT_FILE_PATH, 'w', encoding='utf-8') as report_file:
+            sys.stdout = report_file
+            print(f"Starting planetary data update...")
+            final_data = get_all_planet_data()
+            
+            if final_data and len(final_data) == len(PLANET_DATA):
+                OUTPUT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+                with open(OUTPUT_FILE_PATH, 'w', encoding='utf-8') as f:
+                    json.dump(final_data, f, indent=2, ensure_ascii=False)
+                print(f"\nSuccessfully updated {OUTPUT_FILE_PATH}")
+            else:
+                print("\nCould not fetch valid data for all planets. File was not updated.")
+    finally:
+        sys.stdout = original_stdout
+
+    # --- Final Console and Report Message ---
+    final_message = ""
     if final_data and len(final_data) == len(PLANET_DATA):
-        OUTPUT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(OUTPUT_FILE_PATH, 'w', encoding='utf-8') as f:
-            json.dump(final_data, f, indent=2, ensure_ascii=False)
-        print(f"\nSuccessfully updated {OUTPUT_FILE_PATH}")
+        update_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        final_message = f"planets.json last updated {update_time}"
     else:
-        print("\nCould not fetch valid data for all planets. File was not updated.")
+        final_message = "Script finished with errors. See report for details."
+        
+    print(final_message)
+    with open(REPORT_FILE_PATH, 'a', encoding='utf-8') as report_file:
+        report_file.write(f"\n{final_message}\n")
