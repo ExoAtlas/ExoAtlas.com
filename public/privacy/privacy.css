@@ -1,0 +1,70 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;;
+    color: #000000;
+}
+
+.privacy-policy {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    background: #fff;
+    line-height: 1.7;
+    font-weight: 400;
+}
+
+.privacy-policy h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 0;
+    color: #000000;
+}
+
+.privacy-policy h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.25rem;
+    color: #000000;
+}
+
+.privacy-policy h3 {
+    font-size: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0rem;
+    padding-bottom: 0;
+    color: #000000;
+}
+
+.privacy-policy p {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.privacy-policy ul,
+.privacy-policy ol {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    padding-left: 3rem;
+    font-size: 1rem;
+}
+
+.privacy-policy li {
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.privacy-policy a {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.privacy-policy a:hover {
+    color: #0056b3;
+}

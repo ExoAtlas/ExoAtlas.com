@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Free online TLE parser and orbital calculator. Instantly convert Two-Line Elements to classical orbital elements and ECI state vectors using our lightweight browser tool.">
+  <meta name="keywords" content="TLE parser, Two Line Element calculator, state vector, orbital elements, satellite orbit calculator, ECI coordinates, TLE conversion">
+  <meta name="author" content="ExoAtlas">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Free TLE Parser and Orbital Calculator">
+  <meta property="og:description" content="Convert TLEs to orbital elements and ECI state vectors using our fast, browser-based tool.">
+  <meta property="og:url" content="https://www.exoatlas.com">
+  <!-- Commented out for later use <meta property="og:image" content="https://www.exoatlas.com/og-image.png"> Just replace og-image.png with a real image that represents your tool (ideally 1200×630px). -->
+  <meta property="og:type" content="website">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Free TLE Parser and Orbital Calculator">
+  <meta name="twitter:description" content="Convert TLEs to orbital elements and ECI state vectors online. No sign-up required.">
+  <!-- Commented out for later use <meta name="twitter:image" content="https://www.exoatlas.com/og-image.png"> Just replace og-image.png with a real image that represents your tool (ideally 1200×630px). -->
+  <title>Free TLE Parser and Orbital Calculator | Convert TLE to State Vector Online</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+
+  <!-- CookieYes Banner -->
+  <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/73cd704423e595aa4ac2294b/script.js"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #fff;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    textarea, input, button, select {
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 1em;
+    }
+    textarea, input, select {
+      width: 100%;
+    }
+    #tleInput {
+      resize: none;
+      font-family: monospace;
+      white-space: pre;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .output {
+      white-space: pre-wrap;
+      background-color: #f5f5f5;
+      padding: 10px;
+      border: 1px solid #ccc;
+      height: 100%;
+    }
+    .form-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .form-group label {
+      flex: 0 0 220px;
+      text-align: right;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    .form-group input,
+    .form-group select {
+      flex: 1;
+    }
+    .flex-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .section-title {
+      text-align: center;
+    }
+    .left-column {
+      flex: 1;
+      min-width: 300px;
+    }
+    .right-column {
+      flex: 1;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+    @media (max-width: 768px) {
+      .flex-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Two Line Element (TLE) Parser and Orbital State Vector Calculator</h1>
+    <div class="section">
+      <h2>Parse TLEs and Instantly Compute Orbital Elements and ECI Vectors Online</h2>
+      <textarea id="tleInput" rows="3" placeholder="1 XXXXXU XXXXXA   XXXXX.XXXXXXXX  .XXXXXXXX  XXXXX-X  XXXXX-X X  XXXX&#10;2 XXXXX  XX.XXXX XXX.XXXX XXXXXXX XXX.XXXX XXX.XXXX XX.XXXXXXXXXXXXXX"></textarea>
+      <button onclick="parseTLEToElements()">Parse TLE</button>
+      <div class="flex-row">
+        <div class="left-column">
+          <h3 class="section-title">Classical Orbital Elements</h3>
+          <div class="form-group"><label for="epochFormat">Epoch Time Format</label><select id="epochFormat" onchange="updateEpochDisplay()"><option value="jd">Julian Date (JD)</option><option value="gregorian">Gregorian UTC</option><option value="mjd">Modified Julian Date (MJD)</option><option value="j2000">J2000 Epoch (seconds since)</option><option value="unix">UNIX Time (seconds since 1970)</option><option value="gps">GPS Time (seconds since 1980)</option></select></div>
+          <div class="form-group"><label for="epoch">Epoch</label><input type="text" id="epoch" placeholder="e.g. 2459519.5"></div>
+          <div class="form-group"><label for="a">Semi-major axis (km)</label><input type="text" id="a" placeholder="e.g. 6780"></div>
+          <div class="form-group"><label for="e">Eccentricity</label><input type="text" id="e" placeholder="e.g. 0.001"></div>
+          <div class="form-group"><label for="i">Inclination (deg)</label><input type="text" id="i" placeholder="e.g. 51.64"></div>
+          <div class="form-group"><label for="raan">RAAN (deg)</label><input type="text" id="raan" placeholder="e.g. 247.46"></div>
+          <div class="form-group"><label for="argp">Argument of Perigee (deg)</label><input type="text" id="argp" placeholder="e.g. 130.5"></div>
+          <div class="form-group"><label for="ta">True Anomaly (deg)</label><input type="text" id="ta" placeholder="e.g. 325.0"></div>
+          <div class="form-group"><label for="period">Orbital Period (min)</label><input type="text" id="period" readonly></div>
+          <div class="form-group"><label for="apogee">Apogee (km)</label><input type="text" id="apogee" readonly></div>
+          <div class="form-group"><label for="perigee">Perigee (km)</label><input type="text" id="perigee" readonly></div>
+        </div>
+        <div class="right-column">
+          <h3 class="section-title">State Vector (ECI)</h3>
+          <div id="stateVectorOutput" class="output">Position (km):
+  x =
+  y =
+  z =
+
+Velocity (km/s):
+  vx =
+  vy =
+  vz =</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function deg2rad(deg) { return deg * Math.PI / 180; }
+    function rad2deg(rad) { return rad * 180 / Math.PI; }
+
+    let currentEpochDate;
+
+    function parseTLE(lines) {
+      try {
+        const line1 = lines[0].trim();
+        const line2 = lines[1].trim();
+        const epochYear = parseInt(line1.slice(18, 20));
+        const epochDay = parseFloat(line1.slice(20, 32));
+        const year = epochYear < 57 ? 2000 + epochYear : 1900 + epochYear;
+        const jd = gregorianToJulian(year, epochDay);
+        currentEpochDate = julianToDate(jd);
+
+        const i = parseFloat(line2.slice(8, 16));
+        const raan = parseFloat(line2.slice(17, 25));
+        const e = parseFloat("0." + line2.slice(26, 33));
+        const argp = parseFloat(line2.slice(34, 42));
+        const ma = parseFloat(line2.slice(43, 51));
+        const mm = parseFloat(line2.slice(52, 63));
+
+        const mu = 398600.4418;
+        const nRad = mm * 2 * Math.PI / 86400;
+        const a = Math.pow(mu / (nRad * nRad), 1 / 3);
+        const ta = rad2deg(meanAnomalyToTrueAnomaly(deg2rad(ma), e));
+
+        updateEpochDisplay();
+
+        return { a, e, i, raan, argp, ta };
+      } catch (err) {
+        console.error("Failed to parse TLE:", err);
+        return null;
+      }
+    }
+
+    function gregorianToJulian(year, dayOfYear) {
+      const base = new Date(Date.UTC(year, 0, 1));
+      return (base.getTime() + (dayOfYear - 1) * 86400000) / 86400000 + 2440587.5;
+    }
+
+    function julianToDate(jd) {
+      return new Date((jd - 2440587.5) * 86400000);
+    }
+
+    function updateEpochDisplay() {
+      if (!currentEpochDate) return;
+      const epochFormat = document.getElementById("epochFormat").value;
+      const t = currentEpochDate.getTime();
+      const jd = (t / 86400000) + 2440587.5;
+      const mjd = jd - 2400000.5;
+      const j2000 = (jd - 2451545.0) * 86400;
+      const unix = t / 1000;
+      const gps = unix - 315964800;
+      let value = "";
+
+      switch (epochFormat) {
+        case "gregorian": value = currentEpochDate.toISOString(); break;
+        case "mjd": value = mjd.toFixed(6); break;
+        case "jd": value = jd.toFixed(6); break;
+        case "j2000": value = j2000.toFixed(2); break;
+        case "unix": value = unix.toFixed(0); break;
+        case "gps": value = gps.toFixed(0); break;
+      }
+      document.getElementById("epoch").value = value;
+    }
+
+    function parseTLEToElements() {
+      const tleText = document.getElementById("tleInput").value.trim();
+      const lines = tleText.split("\n").map(l => l.trim()).filter(l => l && (l[0] === '1' || l[0] === '2'));
+
+      const elements = parseTLE(lines);
+      if (!elements) {
+        document.getElementById("stateVectorOutput").textContent = "Error: Unable to Read Element Set.";
+        return;
+      }
+
+      document.getElementById("a").value = elements.a.toFixed(6);
+      document.getElementById("e").value = elements.e.toFixed(7);
+      document.getElementById("i").value = elements.i.toFixed(4);
+      document.getElementById("raan").value = elements.raan.toFixed(4);
+      document.getElementById("argp").value = elements.argp.toFixed(4);
+      document.getElementById("ta").value = elements.ta.toFixed(4);
+
+      convertToStateVector();
+    }
+
+    function meanAnomalyToTrueAnomaly(M, e, tol = 1e-6) {
+      let E = M;
+      for (let i = 0; i < 10; i++) {
+        const dE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+        E -= dE;
+        if (Math.abs(dE) < tol) break;
+      }
+      const cosTA = (Math.cos(E) - e) / (1 - e * Math.cos(E));
+      const sinTA = (Math.sqrt(1 - e * e) * Math.sin(E)) / (1 - e * Math.cos(E));
+      return Math.atan2(sinTA, cosTA);
+    }
+
+    function convertToStateVector() {
+      const a = parseFloat(document.getElementById("a").value);
+      const e = parseFloat(document.getElementById("e").value);
+      const i = deg2rad(parseFloat(document.getElementById("i").value));
+      const raan = deg2rad(parseFloat(document.getElementById("raan").value));
+      const argp = deg2rad(parseFloat(document.getElementById("argp").value));
+      const ta = deg2rad(parseFloat(document.getElementById("ta").value));
+
+      const mu = 398600.4418;
+      const p = a * (1 - e * e);
+      const r = p / (1 + e * Math.cos(ta));
+      const xOrb = r * Math.cos(ta);
+      const yOrb = r * Math.sin(ta);
+      const vxOrb = -Math.sqrt(mu / p) * Math.sin(ta);
+      const vyOrb = Math.sqrt(mu / p) * (e + Math.cos(ta));
+
+      const cosRA = Math.cos(raan), sinRA = Math.sin(raan);
+      const cosI = Math.cos(i), sinI = Math.sin(i);
+      const cosAP = Math.cos(argp), sinAP = Math.sin(argp);
+
+      const R11 = cosRA * cosAP - sinRA * sinAP * cosI;
+      const R12 = -cosRA * sinAP - sinRA * cosAP * cosI;
+      const R21 = sinRA * cosAP + cosRA * sinAP * cosI;
+      const R22 = -sinRA * sinAP + cosRA * cosAP * cosI;
+      const R31 = sinAP * sinI;
+      const R32 = cosAP * sinI;
+
+      const x = R11 * xOrb + R12 * yOrb;
+      const y = R21 * xOrb + R22 * yOrb;
+      const z = R31 * xOrb + R32 * yOrb;
+      const vx = R11 * vxOrb + R12 * vyOrb;
+      const vy = R21 * vxOrb + R22 * vyOrb;
+      const vz = R31 * vxOrb + R32 * vyOrb;
+
+      const periodMin = 2 * Math.PI * Math.sqrt(Math.pow(a, 3) / mu) / 60;
+      const apogee = a * (1 + e);
+      const perigee = a * (1 - e);
+
+      document.getElementById("period").value = periodMin.toFixed(2);
+      document.getElementById("apogee").value = apogee.toFixed(3);
+      document.getElementById("perigee").value = perigee.toFixed(3);
+
+      const epochValue = document.getElementById("epoch").value;
+      const epochLabel = document.getElementById("epochFormat").selectedOptions[0].text;
+
+const output = `Epoch (${epochLabel}): ${epochValue}
+
+Position (km):
+  x = ${x.toFixed(3)}
+  y = ${y.toFixed(3)}
+  z = ${z.toFixed(3)}
+
+Velocity (km/s):
+  vx = ${vx.toFixed(6)}
+  vy = ${vy.toFixed(6)}
+  vz = ${vz.toFixed(6)}`;
+
+      document.getElementById("stateVectorOutput").textContent = output;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- SEO -->
+  <title>Convert Gregorian Date, Julian Date, MJD, and J2000 Epoch Time | Online Calculator &mdash; ExoAtlas</title>
+  <link rel="canonical" href="https://www.exoatlas.com/epoch-calculator" />
+  <meta name="description" content="Effortlessly convert and calculate between Gregorian Date, Julian Date (JD), Modified Julian Date (MJD), and J2000 Epoch Time with this powerful online tool. Perfect for astronomers, researchers, and space enthusiasts seeking precise time conversions for academic and observational needs." />
+
+  <meta property="og:site_name" content="ExoAtlas" />
+  <meta property="og:title" content="Convert Gregorian Date, Julian Date, MJD, and J2000 Epoch Time | Online Calculator &mdash; ExoAtlas" />
+  <meta property="og:url" content="https://www.exoatlas.com/epoch-calculator" />
+  <meta property="og:type" content="website" />
+  <meta property="og:description" content="Effortlessly convert and calculate between Gregorian Date, Julian Date (JD), Modified Julian Date (MJD), and J2000 Epoch Time with this powerful online tool. Perfect for astronomers, researchers, and space enthusiasts seeking precise time conversions for academic and observational needs." />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Convert Gregorian Date, Julian Date, MJD, and J2000 Epoch Time | Online Calculator &mdash; ExoAtlas" />
+  <meta name="twitter:url" content="https://www.exoatlas.com/epoch-calculator" />
+  <meta name="twitter:description" content="Effortlessly convert and calculate between Gregorian Date, Julian Date (JD), Modified Julian Date (MJD), and J2000 Epoch Time with this powerful online tool. Perfect for astronomers, researchers, and space enthusiasts seeking precise time conversions for academic and observational needs." />
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/tools/epoch-calculator/epoch-calculator.css" />
+  <script defer src="assets/js/main.js"></script>
+
+  <!-- Google Tag Default Consents -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied", 
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        functionality_storage: "denied",
+        personalization_storage: "denied",
+        security_storage: "granted",
+        wait_for_update: 2000,
+    });
+    gtag("set", "ads_data_redaction", true);
+    gtag("set", "url_passthrough", true);
+  </script>
+
+  <!-- CookieYes Banner -->
+  <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/73cd704423e595aa4ac2294b/script.js"></script>
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LV8V28JZ0L"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LV8V28JZ0L');
+  </script>
+
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7099143341693852" crossorigin="anonymous"></script>
+
+</head>
+
+  
+<body>
+<!-- Sticky Navigation Header -->
+<nav class="site-header">
+    <div class="site-header-inner"> <div class="nav-container">
+            <div class="logo"><a href="/">ExoAtlas</a></div>
+            <div class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/about">About</a>
+                <a href="/data">Data</a>
+                <div class="dropdown">
+                    <a href="/tools">Tools</a>
+                    <div class="dropdown-content">
+                        <a href="/tools/epoch-calculator">Epoch Calculator</a>
+                        <a href="/tools/light-pollution-map">Light Pollution Map</a>
+                    </div>
+                </div>
+                <a href="/updates">Product Updates</a>
+            </div>
+        </div>
+        <div class="nav-cta">
+            <a href="/live">Live Solar System</a>
+        </div>
+
+        <button class="hamburger-menu" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
+            <div class="hamburger-icon-wrapper"> <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </div>
+            <span class="hamburger-menu-text">Menu</span>
+        </button>
+    </div> 
+</nav>
+
+<div class="mobile-nav-menu" id="mobileNavMenu">
+    <a href="/" class="active">Home</a>
+    <a href="/about">About</a>
+    <a href="/data">Data</a>
+    <span class="mobile-nav-parent-link">Tools</span>
+    <a href="/tools/epoch-calculator" class="mobile-dropdown-item">Epoch Calculator</a>
+    <a href="/tools/light-pollution-map" class="mobile-dropdown-item">Light Pollution Map</a>
+    <a href="/updates">Product Updates</a>
+    <a href="/live" class="mobile-nav-cta-item">Live Solar System</a>
+</div>
+
+
+
+<div class="main-container">
+    <img src="/assets/img/nasa-earth-bg.jpg" alt="Earth" class="page-bg"/>
+    
+    <div class="calculator-container">
+        <h1>EPOCH CALCULATOR</h1>
+        <div class="date-display">
+            <p><strong>Current Gregorian Date:</strong> <span id="gregorian-date"></span></p>
+            <p><strong>Current Julian Date:</strong> <span id="julian-date"></span></p>
+            <p><strong>Current Modified Julian Date:</strong> <span id="mjd"></span></p>
+            <p><strong>Current J2000 Epoch Date:</strong> <span id="j2000"></span></p>
+        </div>
+        <hr>
+        <h2>Convert Epoch Date Format</h2>
+        <p id="convert-instruction">(Please provide an input in at least one field.)</p>
+        <form id="convert-form">
+            <label for="input-gregorian">Enter Gregorian Date and Time (YYYY-MM-DD HH:MM):</label>
+            <input type="datetime-local" id="input-gregorian" step="1">
+
+            <label for="input-julian">Enter Julian Date:</label>
+            <input type="number" id="input-julian" step="any">
+
+            <label for="input-mjd">Enter Modified Julian Date:</label>
+            <input type="number" id="input-mjd" step="any">
+
+            <label for="input-j2000">Enter J2000 Days:</label>
+            <input type="number" id="input-j2000" step="any">
+
+            <button type="button" id="convert-button">Calculate</button>
+        </form>
+        <hr>
+        <h2><strong>Epoch Calculations</strong></h2>
+        <div id="results">
+            <p><strong>Gregorian Date and Time:</strong> <span id="result-gregorian"></span></p>
+            <p><strong>Julian Date:</strong> <span id="result-julian"></span></p>
+            <p><strong>Modified Julian Date:</strong> <span id="result-mjd"></span></p>
+            <p><strong>J2000 Epoch Date:</strong> <span id="result-j2000"></span></p>
+        </div>
+    </div>
+
+    <div class="notes-container">
+        <h1>NOTES</h1>
+        <p>An <strong>epoch</strong> in astronomy is the reference time used for consistency in calculation of positions and orbits. Common astronomical epochs include <strong>Julian Date</strong>, <strong>Modified Julian Date</strong>, and <strong>J2000</strong>.</p>
+        <hr>
+        <h2>Gregorian Date</h2>
+        <p>The calendar system most used today. The system was introduced in 1582 to correct inaccuracies in the Julian Calendar.</p>
+        <ul>
+            <li>Aligned with the solar year to ensure seasonal consistency.</li>
+            <li>Utilizes "year", "month", and "day" format.</li>
+            <li>A year is 365 days, with a leap year every 4 years.</li>
+            <li>Months have varying lengths (28-31 days).</li>
+        </ul>
+        <hr>
+        <h2>Julian Date (JD) Epoch</h2>
+        <p2>A continuous count of days that is useful for astronomical calculations as it eliminates complications of months and years.</p2>
+        <ul>
+            <li>Starts from <strong>12:00 UTC on January 1, 4713 BCE</strong>.</li>
+            <li>Expressed as a decimal number to represent fractional days.</li>
+            <li>e.g., 2451545.0 corresponds to January 1, 2000, at 12:00 UTC.</li>
+        </ul>
+        <hr>
+        <h2>Modified Julian Date (MJD) Epoch</h2>
+        <p2>A simplified version of the Julian Date, introduced for convenience in some scientific and technical fields.</p2>
+        <ul>
+            <li>Starts from <strong>00:00 UTC on November 17, 1858</strong>.</li>
+            <li>MJD = JD - 2400000.5</li>
+        </ul>
+        <hr>
+        <h2>J2000 Epoch</h2>
+        <p2>A standard epoch in astronomy that is used as a reference point for celestial coordinates and astronomical phenomena.</p2>
+        <ul>
+            <li>Starts from <strong>12:00 UTC on January 1, 2000</strong>.</li>
+            <li>Expressed in Julian Date as <strong>2451545.0.</strong>.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Utility functions
+    function calculateJulianDateFromGregorian(date) {
+        return (date.getTime() / 86400000) + 2440587.5;
+    }
+
+    function calculateGregorianFromJulian(jd) {
+        const date = new Date((jd - 2440587.5) * 86400000);
+        return date.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    }
+
+    function calculateMJDFromJulian(jd) {
+        return jd - 2400000.5;
+    }
+
+    function calculateJulianFromMJD(mjd) {
+        return mjd + 2400000.5;
+    }
+
+    function calculateJ2000FromJulian(jd) {
+        return jd - 2451545.0;
+    }
+
+    function calculateJulianFromJ2000(j2000) {
+        return j2000 + 2451545.0;
+    }
+
+    // Event listener for calculation
+    document.getElementById('convert-button').addEventListener('click', () => {
+        const gregorianInput = document.getElementById('input-gregorian').value;
+        const julianInput = document.getElementById('input-julian').value;
+        const mjdInput = document.getElementById('input-mjd').value;
+        const j2000Input = document.getElementById('input-j2000').value;
+
+        let julianDate, gregorianDate, mjd, j2000Days;
+
+        if (gregorianInput) {
+            const date = new Date(gregorianInput);
+            julianDate = calculateJulianDateFromGregorian(date);
+            gregorianDate = date.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        } else if (julianInput) {
+            julianDate = parseFloat(julianInput);
+            gregorianDate = calculateGregorianFromJulian(julianDate);
+        } else if (mjdInput) {
+            mjd = parseFloat(mjdInput);
+            julianDate = calculateJulianFromMJD(mjd);
+            gregorianDate = calculateGregorianFromJulian(julianDate);
+        } else if (j2000Input) {
+            j2000Days = parseFloat(j2000Input);
+            julianDate = calculateJulianFromJ2000(j2000Days);
+            gregorianDate = calculateGregorianFromJulian(julianDate);
+        } else {
+            alert('Please provide a valid input in at least one field.');
+            return;
+        }
+
+        if(isNaN(julianDate)) {
+                alert('Please provide a valid input.');
+            return;
+        }
+
+        mjd = calculateMJDFromJulian(julianDate);
+        j2000Days = calculateJ2000FromJulian(julianDate);
+
+        // Populate results
+        document.getElementById('result-gregorian').textContent = gregorianDate;
+        document.getElementById('result-julian').textContent = julianDate.toFixed(8);
+        document.getElementById('result-mjd').textContent = mjd.toFixed(8);
+        document.getElementById('result-j2000').textContent = j2000Days.toFixed(8);
+    });
+
+    // Update current date/time on load
+    function updateCurrentDates() {
+        const now = new Date();
+        const gregorianDate = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        const julianDate = calculateJulianDateFromGregorian(now);
+        const mjd = calculateMJDFromJulian(julianDate);
+        const j2000Days = calculateJ2000FromJulian(julianDate);
+
+        document.getElementById('gregorian-date').textContent = gregorianDate;
+        document.getElementById('julian-date').textContent = julianDate.toFixed(8);
+        document.getElementById('mjd').textContent = mjd.toFixed(8);
+        document.getElementById('j2000').textContent = j2000Days.toFixed(8);
+    }
+
+    updateCurrentDates();
+    setInterval(updateCurrentDates, 1000); // Update every second
+</script>
+
+
+
+
+<!-- Global Footer -->
+  <footer class="footer">
+  <div class="footer-container">
+    <div class="footer-column">
+      <h3>ExoAtlas</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/updates">Product Updates</a></li>
+      </ul>
+    </div>
+    <div class="footer-column">
+      <h3>Applications</h3>
+      <ul>
+        <li><a href="/live">ExoAtlas Explorer</a></li>
+      </ul>
+    </div>
+    <div class="footer-column">
+      <h3>Tools</h3>
+      <ul>
+        <li><a href="/tools/epoch-calculator">Epoch Calculator</a></li>
+        <li><a href="/tools/light-pollution-map">Light Pollution Map</a></li>
+      </ul>
+    </div>
+    <div class="footer-column">
+      <h3>Support</h3>
+      <ul>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/contact">Contact Us</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-socials">
+      <a href="https://www.reddit.com/r/ExoAtlas/" target="_blank" aria-label="Reddit"><i class="fab fa-reddit"></i></a>
+      <a href="https://www.instagram.com/exoatlasexplorer/" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+      <a href="https://x.com/ExoAtlasExplore" target="_blank" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+    </div>
+    <p>© 2025 ExoAtlas LLC – All Rights Reserved</p>
+  </div>
+</footer>
+  
+</body>
+</html>
