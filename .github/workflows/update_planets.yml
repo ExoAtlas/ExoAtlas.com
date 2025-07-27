@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
   # To prevent multiple workflow runs from accidentally overlapping (e.g. a manual run while a scheduled one is active)
-  concurrency:
-    group: ${{ github.workflow }}
-    cancel-in-progress: true
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   update-planet-data:
