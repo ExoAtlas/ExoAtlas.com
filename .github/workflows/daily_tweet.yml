@@ -49,4 +49,4 @@ jobs:
           echo "::add-mask::$TWITTER_API_SECRET"
           echo "::add-mask::$TWITTER_ACCESS_TOKEN"
           echo "::add-mask::$TWITTER_ACCESS_SECRET"
-          python main/twitter/daily_tweet.py
+          python twitter/daily_tweet.py
