@@ -13,22 +13,23 @@ permissions:
 jobs:
   tweet:
     runs-on: ubuntu-latest
-    timeout-minutes: 1  # Cancel if job runs longer than 5 minutes
+    timeout-minutes: 1  # Cancel if job runs longer than 1 minute
 
     env:
+      TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
       TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
       TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
       TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
       TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
 
     steps:
-      # Step 1: Checkout repo (pinned SHA for security)
+      # Step 1: Checkout repo
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           persist-credentials: false  # Prevent GitHub token from being stored
 
-      # Step 2: Set up Python (pinned version)
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -45,6 +46,7 @@ jobs:
       - name: Run tweet script
         run: |
           # Mask environment variables (defense-in-depth)
+          echo "::add-mask::$TWITTER_BEARER_TOKEN"
           echo "::add-mask::$TWITTER_API_KEY"
           echo "::add-mask::$TWITTER_API_SECRET"
           echo "::add-mask::$TWITTER_ACCESS_TOKEN"
