@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # Required to push changes to repo
 
 jobs:
   tweet:
@@ -27,7 +27,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          persist-credentials: false  # Prevent GitHub token from being stored
+          persist-credentials: false  # Use token explicitly for push
 
       # Step 2: Set up Python
       - name: Set up Python
@@ -55,9 +55,11 @@ jobs:
 
       # Step 5: Commit updated reports.txt back to repo
       - name: Commit and push reports.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add twitter/reports.txt
           git commit -m "Update tweet log [skip ci]" || echo "No changes to commit"
-          git push
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
