@@ -56,7 +56,7 @@ jobs:
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
 
       - name: Upload reports.txt as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tweet-reports
           path: twitter/reports.txt
