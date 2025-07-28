@@ -20,9 +20,8 @@ def log_report(success=True):
     # Get current UTC time
     utc_now = datetime.utcnow().strftime("%b %d, %H:%M:%S UTC")
     status = "tweet posted successfully" if success else "tweet failed to post"
-    # Append to report file
     with open(REPORT_FILE, "a", encoding="utf-8") as f:
-        f.write(f"{utc_now.replace(',', '')}, {status}\n")
+        f.write(f"{utc_now}, {status}\n")
 
 def main():
     # Load tweet data
@@ -38,19 +37,30 @@ def main():
         return
 
     # Twitter API credentials from GitHub Secrets
+    bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
     api_key = os.environ["TWITTER_API_KEY"]
     api_secret = os.environ["TWITTER_API_SECRET"]
     access_token = os.environ["TWITTER_ACCESS_TOKEN"]
     access_secret = os.environ["TWITTER_ACCESS_SECRET"]
 
-    # Authenticate
-    auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_secret)
-    api = tweepy.API(auth)
-
     try:
-        api.update_status(status=tweet_text)
-        print(f"Tweet posted for {today_key}: {tweet_text}")
-        log_report(success=True)
+        # Tweepy Client for Twitter API v2
+        client = tweepy.Client(
+            bearer_token=bearer_token,
+            consumer_key=api_key,
+            consumer_secret=api_secret,
+            access_token=access_token,
+            access_token_secret=access_secret
+        )
+
+        response = client.create_tweet(text=tweet_text)
+        if response.data and "id" in response.data:
+            print(f"Tweet posted for {today_key}: {tweet_text}")
+            log_report(success=True)
+        else:
+            print(f"Failed to post tweet, response: {response}")
+            log_report(success=False)
+
     except Exception as e:
         print(f"Failed to post tweet: {e}")
         log_report(success=False)
