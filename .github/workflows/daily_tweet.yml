@@ -13,7 +13,7 @@ permissions:
 jobs:
   tweet:
     runs-on: ubuntu-latest
-    timeout-minutes: 5  # Cancel if job runs longer than 5 minutes
+    timeout-minutes: 1  # Cancel if job runs longer than 5 minutes
 
     env:
       TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
