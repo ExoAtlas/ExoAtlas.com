@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read   # This workflow only needs read access to repo contents
+  contents: write
 
 jobs:
   tweet:
@@ -52,3 +52,12 @@ jobs:
           echo "::add-mask::$TWITTER_ACCESS_TOKEN"
           echo "::add-mask::$TWITTER_ACCESS_SECRET"
           python twitter/daily_tweet.py
+
+      # Step 5: Commit updated reports.txt back to repo
+      - name: Commit and push reports.txt
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add twitter/reports.txt
+          git commit -m "Update tweet log [skip ci]" || echo "No changes to commit"
+          git push
