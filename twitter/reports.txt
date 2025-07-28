@@ -1,3 +1,1 @@
 
-Jul 28, 01:56:19 UTC, tweet failed to post
-Jul 28, 01:57:44 UTC, tweet posted successfully
