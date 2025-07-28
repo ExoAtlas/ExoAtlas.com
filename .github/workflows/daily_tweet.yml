@@ -1,19 +1,17 @@
-name: Daily Tweet  # Workflow name
+name: Daily Tweet
 
 on:
-  # Runs daily at 14:00 UTC (10:00 AM Eastern)
   schedule:
-    - cron: "0 14 * * *"
-  # Allows manual trigger from Actions tab
+    - cron: "0 14 * * *"   # 10:00 AM Eastern
   workflow_dispatch:
 
 permissions:
-  contents: write   # Required to push changes to repo
+  contents: write
 
 jobs:
   tweet:
     runs-on: ubuntu-latest
-    timeout-minutes: 1  # Cancel if job runs longer than 1 minute
+    timeout-minutes: 5
 
     env:
       TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
@@ -23,38 +21,31 @@ jobs:
       TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
 
     steps:
-      # Step 1: Checkout repo
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          persist-credentials: false  # Use token explicitly for push
+          persist-credentials: false
 
-      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      # Step 3: Install dependencies safely
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install specific versions to prevent supply-chain attacks
           python -m pip install tweepy==4.14.0 pytz==2023.3
 
-      # Step 4: Run daily tweet script
-      - name: Run tweet script
-        run: |
-          # Mask environment variables (defense-in-depth)
-          echo "::add-mask::$TWITTER_BEARER_TOKEN"
-          echo "::add-mask::$TWITTER_API_KEY"
-          echo "::add-mask::$TWITTER_API_SECRET"
-          echo "::add-mask::$TWITTER_ACCESS_TOKEN"
-          echo "::add-mask::$TWITTER_ACCESS_SECRET"
-          python twitter/daily_tweet.py
+      - name: Run daily tweet script
+        run: python twitter/daily_tweet.py
 
-      # Step 5: Commit updated reports.txt back to repo
-      - name: Commit and push reports.txt
+      - name: Commit updated reports.txt back to repo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -63,3 +54,9 @@ jobs:
           git add twitter/reports.txt
           git commit -m "Update tweet log [skip ci]" || echo "No changes to commit"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+
+      - name: Upload reports.txt as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tweet-reports
+          path: twitter/reports.txt
