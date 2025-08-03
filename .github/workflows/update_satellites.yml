@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   # Runs the job daily at 08:00 UTC (1:00 AM PDT)
   schedule:
-    - cron: '0 8 * * *'
+    - cron: '30 17 * * *'
 
 jobs:
   update-json-data:
