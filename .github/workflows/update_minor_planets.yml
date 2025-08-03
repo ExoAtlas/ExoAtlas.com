@@ -6,8 +6,11 @@ on:
     # Runs at 08:00 UTC every Sunday
     - cron: '0 8 * * 0'
 
+permissions:
+  contents: write
+
 jobs:
-  update-minor-planet-data:
+  update-asteroid-data:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
