@@ -1,4 +1,4 @@
-name: Update Asteroid Database
+name: Update Minor Planets and Asteroid JSON File
 
 on:
   workflow_dispatch:
