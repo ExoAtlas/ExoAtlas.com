@@ -35,16 +35,19 @@ jobs:
         env:
           SPACETRACK_USER: ${{ secrets.SPACETRACK_USER }}
           SPACETRACK_PASSWORD: ${{ secrets.SPACETRACK_PASSWORD }}
-        run: python ./scripts/update_satellites.py
+        # The user's original file path was './scripts/update_satellites.py'. 
+        # This is updated to assume the script is in the root, matching the python code.
+        run: python update_satellites.py
       
       # 5. Commits the changes back to the repository
       - name: Commit and Push if Changed
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add public/data/json/satellites.json
+          # Add both the JSON file and the new report file
+          git add public/data/json/satellites.json update_satellites_report.txt
           # The following command exits with 0 if there are no changes,
           # and 1 if there are changes. The '|| exit 0' part prevents the
           # workflow from failing if there are no changes to commit.
-          git diff --staged --quiet || (git commit -m "Automated: Update satellite TLE data" && git push)
+          git diff --staged --quiet || (git commit -m "Automated: Daily data and report update" && git push)
           echo "Commit and push step completed."
