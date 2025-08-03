@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 # --- Configuration ---
 REPORT_DIR = "scripts/reports"
 REPORT_FILE_PATH = os.path.join(REPORT_DIR, "update_minor_planets_report.txt")
-MPCORB_URL = "https://minorplanetcenter.net/MPCORB.dat.gz"
+MPCORB_URL = "https://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
 DAT_FILE_PATH = "MPCORB.dat"
 JSON_OUTPUT_PATH = "public/data/json/minor_planets.json"
 
