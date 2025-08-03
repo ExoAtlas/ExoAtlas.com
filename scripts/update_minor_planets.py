@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 # --- Configuration ---
 REPORT_DIR = "scripts/reports"
 REPORT_FILE_PATH = os.path.join(REPORT_DIR, "update_minor_planets_report.txt")
+# Using the user-confirmed URL
 MPCORB_URL = "https://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
 DAT_FILE_PATH = "MPCORB.dat"
 JSON_OUTPUT_PATH = "public/data/json/minor_planets.json"
@@ -42,11 +43,14 @@ def parse_mpcorb_dat():
     """Parses the fixed-width MPCORB.dat file."""
     logging.info(f"Parsing {DAT_FILE_PATH}...")
     asteroids = []
-    try:
-        with open(DAT_FILE_PATH, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.startswith('#') or line.strip() == '' or line.startswith('-----'):
-                    continue
+    skipped_lines = 0
+    with open(DAT_FILE_PATH, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.startswith('#') or line.strip() == '' or line.startswith('-----'):
+                continue
+            
+            # --- Robust Parsing Block ---
+            try:
                 asteroids.append({
                     "designation": line[0:7].strip(),
                     "name": line[166:194].strip() or "N/A",
@@ -60,10 +64,14 @@ def parse_mpcorb_dat():
                     "mean_daily_motion": float(line[80:91].strip()),
                     "semimajor_axis": float(line[92:103].strip()),
                 })
-        logging.info(f"Successfully parsed {len(asteroids)} asteroid records.")
-        return asteroids
-    except (IOError, ValueError) as e:
-        raise Exception(f"Failed during file parsing: {e}")
+            except ValueError:
+                skipped_lines += 1
+                logging.warning(f"Skipping malformed line: Could not parse number. Content: {line.strip()}")
+
+    if skipped_lines > 0:
+        logging.warning(f"Total lines skipped due to formatting errors: {skipped_lines}")
+    logging.info(f"Successfully parsed {len(asteroids)} asteroid records.")
+    return asteroids
 
 def write_to_json(data):
     """Writes the parsed data to a JSON file."""
@@ -80,6 +88,8 @@ if __name__ == "__main__":
         logging.info("Starting weekly minor planet update...")
         download_and_decompress()
         parsed_data = parse_mpcorb_dat()
+        if not parsed_data:
+            raise Exception("Parsing resulted in no data. Check MPCORB.dat format.")
         write_to_json(parsed_data)
         logging.info(f"SUCCESS: Update complete. Total objects processed: {len(parsed_data)}")
     except Exception as e:
