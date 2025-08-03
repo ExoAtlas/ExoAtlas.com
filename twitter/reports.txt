@@ -5,3 +5,4 @@ Jul 30, 14:29:10 UTC, tweet posted successfully | In 1971, the Apollo 15 astrona
 Jul 31, 14:29:58 UTC, tweet posted successfully | On this day in 1964, Ranger 7 impacted the Moon, transmitting incredible high-resolution images right up to the final moments. #Ranger7
 Aug 01, 14:29:41 UTC, tweet posted successfully | In 1955, the first issue of "Astronautics" magazine was published by the American Rocket Society. #Astronautics
 Aug 02, 14:25:45 UTC, tweet posted successfully | On this day in 1971, the Apollo 15 crew drove the Lunar Roving Vehicle on the Moon for the third and final time, concluding its first use in exploration. 🚙 #Apollo15 #LRV
+Aug 03, 14:25:10 UTC, tweet posted successfully | In 2004, NASA's MESSENGER spacecraft was launched on a 7-year journey to Mercury, becoming the first probe to orbit the innermost planet. #MESSENGER #Mercury
