@@ -7,7 +7,7 @@ on:
     - cron: '0 8 * * 0'
 
 jobs:
-  update-asteroid-data:
+  update-minor-planet-data:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -24,7 +24,7 @@ jobs:
         run: pip install requests
       
       - name: Run MPCORB Parser
-        run: python update_minor_planets.py
+        run: python ./scripts/update_minor_planets.py
 
       - name: Commit and Push if Changed
         run: |
