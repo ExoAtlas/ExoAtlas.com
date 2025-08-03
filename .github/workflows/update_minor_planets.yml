@@ -1,4 +1,4 @@
-name: Update Minor Planets and Asteroid JSON File
+name: Weekly minor_planets.json Update
 
 on:
   workflow_dispatch:
