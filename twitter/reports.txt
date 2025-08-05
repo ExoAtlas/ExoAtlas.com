@@ -7,3 +7,4 @@ Aug 01, 14:29:41 UTC, tweet posted successfully | In 1955, the first issue of "A
 Aug 02, 14:25:45 UTC, tweet posted successfully | On this day in 1971, the Apollo 15 crew drove the Lunar Roving Vehicle on the Moon for the third and final time, concluding its first use in exploration. 🚙 #Apollo15 #LRV
 Aug 03, 14:25:10 UTC, tweet posted successfully | In 2004, NASA's MESSENGER spacecraft was launched on a 7-year journey to Mercury, becoming the first probe to orbit the innermost planet. #MESSENGER #Mercury
 Aug 04, 14:32:57 UTC, tweet posted successfully | On this day in 2007, the Phoenix Mars Lander was launched. It would later land in the Martian arctic to dig for water ice. #PhoenixLander #Mars
+Aug 05, 14:32:16 UTC, tweet posted successfully | Happy birthday to Neil Armstrong (born 1930), the commander of Apollo 11 and the first person to walk on the Moon. A true legend. 🌕 #NeilArmstrong
