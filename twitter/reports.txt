@@ -10,3 +10,4 @@ Aug 04, 14:32:57 UTC, tweet posted successfully | On this day in 2007, the Phoen
 Aug 05, 14:32:16 UTC, tweet posted successfully | Happy birthday to Neil Armstrong (born 1930), the commander of Apollo 11 and the first person to walk on the Moon. A true legend. 🌕 #NeilArmstrong
 Aug 06, 14:31:56 UTC, tweet posted successfully | In 2012, the Curiosity rover successfully landed on Mars using its audacious "sky crane" maneuver. A thrilling moment in planetary exploration! 🔴 #CuriosityRover #Mars
 Aug 07, 14:31:35 UTC, tweet posted successfully | On this day in 1996, NASA announced the discovery of potential evidence of ancient, microscopic life in a Martian meteorite, ALH84001. #Mars #LifeOnMars
+Aug 08, 14:29:42 UTC, tweet posted successfully | In 1978, the Pioneer Venus 2 mission was launched, which sent multiple probes into the atmosphere of Venus. #PioneerVenus
