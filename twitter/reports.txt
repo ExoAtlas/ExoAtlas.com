@@ -12,3 +12,4 @@ Aug 06, 14:31:56 UTC, tweet posted successfully | In 2012, the Curiosity rover s
 Aug 07, 14:31:35 UTC, tweet posted successfully | On this day in 1996, NASA announced the discovery of potential evidence of ancient, microscopic life in a Martian meteorite, ALH84001. #Mars #LifeOnMars
 Aug 08, 14:29:42 UTC, tweet posted successfully | In 1978, the Pioneer Venus 2 mission was launched, which sent multiple probes into the atmosphere of Venus. #PioneerVenus
 Aug 09, 14:24:55 UTC, tweet posted successfully | On this day in 1975, the European Space Agency (ESA) was officially established. #ESA
+Aug 10, 14:24:41 UTC, tweet posted successfully | In 1990, the Magellan spacecraft entered orbit around Venus, using radar to map over 98% of the planet's cloud-obscured surface in stunning detail. #Magellan #Venus
