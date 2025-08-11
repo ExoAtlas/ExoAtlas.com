@@ -46,7 +46,7 @@ def generate_exoatlas_id(minor_planet_number):
 def fetch_and_parse_data(url, limit=100):
     """
     Fetches the first `limit` lines from the MPCORB.DAT file and parses the data,
-    correctly skipping the header lines.
+    with robust error handling for malformed lines.
     """
     print(f"Fetching data from {url}...")
     try:
@@ -60,7 +60,6 @@ def fetch_and_parse_data(url, limit=100):
     data = []
     
     # The data section of the file starts with the first line that has a valid name.
-    # We can skip the header by iterating until we find a line with a non-empty name.
     header_skipped = False
     
     for i, line in enumerate(lines):
@@ -68,15 +67,14 @@ def fetch_and_parse_data(url, limit=100):
             continue
 
         try:
-            # Check for a valid name in the first 7 characters to identify a data line
+            # Check for a valid name to identify a data line
             name = line[0:7].strip()
             if not name and not header_skipped:
-                # This is likely a header or blank line, so we continue skipping.
                 continue
             
             header_skipped = True
             
-            # Now, proceed with parsing the rest of the data.
+            # Use safe parsing with try-except blocks for fields that may be malformed
             minor_planet_number_str = line[159:165].strip()
             minor_planet_number = int(minor_planet_number_str) if minor_planet_number_str else None
             exoatlas_id = generate_exoatlas_id(minor_planet_number)
@@ -93,7 +91,10 @@ def fetch_and_parse_data(url, limit=100):
             semimajor_axis = float(line[92:103].strip())
             orbit_type = line[166:170].strip()
             last_observation = line[105:114].strip()
-            arc_length = int(line[115:119].strip())
+            
+            # This is the line that was likely causing the error. Now it's handled safely.
+            arc_length_str = line[115:119].strip()
+            arc_length = int(arc_length_str) if arc_length_str else None
             
             data.append((name, h_abs_mag, g_slope_param, epoch, mean_anomaly, arg_perihelion,
                          long_asc_node, inclination, eccentricity, mean_daily_motion,
