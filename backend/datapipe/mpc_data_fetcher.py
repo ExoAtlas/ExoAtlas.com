@@ -45,8 +45,8 @@ def generate_exoatlas_id(minor_planet_number):
 
 def fetch_and_parse_data(url, limit=100):
     """
-    Fetches and parses the data, now including the minor planet number
-    to generate the ExoAtlas ID.
+    Fetches the first `limit` lines from the MPCORB.DAT file and parses the data,
+    correctly skipping the header lines.
     """
     print(f"Fetching data from {url}...")
     try:
@@ -59,22 +59,28 @@ def fetch_and_parse_data(url, limit=100):
     lines = response.iter_lines(decode_unicode=True)
     data = []
     
+    # The data section of the file starts with the first line that has a valid name.
+    # We can skip the header by iterating until we find a line with a non-empty name.
+    header_skipped = False
+    
     for i, line in enumerate(lines):
-        if i >= limit:
-            break
-        
+        if not line:
+            continue
+
         try:
-            # The official minor planet number is in columns 159-165
+            # Check for a valid name in the first 7 characters to identify a data line
+            name = line[0:7].strip()
+            if not name and not header_skipped:
+                # This is likely a header or blank line, so we continue skipping.
+                continue
+            
+            header_skipped = True
+            
+            # Now, proceed with parsing the rest of the data.
             minor_planet_number_str = line[159:165].strip()
             minor_planet_number = int(minor_planet_number_str) if minor_planet_number_str else None
-            
-            # Use the number to create the ExoAtlas ID
             exoatlas_id = generate_exoatlas_id(minor_planet_number)
             
-            name = line[0:7].strip()
-            if not name:
-                continue
-
             h_abs_mag = float(line[8:13].strip())
             g_slope_param = float(line[14:19].strip())
             epoch = line[20:25].strip()
@@ -93,8 +99,11 @@ def fetch_and_parse_data(url, limit=100):
                          long_asc_node, inclination, eccentricity, mean_daily_motion,
                          semimajor_axis, orbit_type, last_observation, arc_length, exoatlas_id))
         except (ValueError, IndexError) as e:
-            print(f"Skipping malformed line {i}: {line} - Error: {e}")
+            print(f"Skipping malformed or header line {i}: {line} - Error: {e}")
             continue
+
+        if len(data) >= limit:
+            break
 
     print(f"Successfully parsed {len(data)} lines of data.")
     return data
