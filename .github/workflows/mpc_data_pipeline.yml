@@ -34,7 +34,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
           nohup flyctl proxy 5432 exoatlas.flycast >/dev/null 2>&1 &
-          # wait until localhost:5432 is reachable (up to ~10s)
+          # Wait until localhost:5432 is reachable (up to ~10s)
           for i in {1..10}; do
             if bash -c ">/dev/tcp/127.0.0.1/5432" 2>/dev/null; then echo "DB proxy ready"; break; fi
             sleep 1
@@ -42,11 +42,12 @@ jobs:
 
       - name: Run Data Fetcher
         env:
-          # Use the local tunnel; no TLS needed over localhost
-          FLY_DATABASE_URL: postgres://postgres:${{ secrets.PG_PASSWORD }}@127.0.0.1:5432/postgres?sslmode=disable
+          # Script expects DATABASE_URL, not FLY_DATABASE_URL
+          DATABASE_URL: postgres://postgres:${{ secrets.PG_PASSWORD }}@127.0.0.1:5432/postgres?sslmode=disable
           USER_AGENT: 'ExoAtlas/1.0 (+https://exoatlas.com; Contact: admin@exoatlas.com)'
         run: |
           if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
+            echo "Using DATABASE_URL=$DATABASE_URL"
             python -u backend/datapipe/mpc_data_fetcher.py
           else
             echo "Error: backend/datapipe/mpc_data_fetcher.py not found."
