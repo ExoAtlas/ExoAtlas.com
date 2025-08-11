@@ -1,48 +1,73 @@
 ExoAtlas Object ID Nomenclature
-All objects in the ExoAtlas dataset are assigned a unique, 9-character numeric identifier (objnum) for consistent data management. The ID's structure reveals the object's category and, where applicable, its relationship to other bodies.
+All objects in the ExoAtlas dataset are assigned a unique, 9-character numeric identifier (objnum) for consistent data management. The ID's structure is hierarchical and chronological, revealing an object's category and its relationship to other bodies.
 
-The first digit of the ID is a prefix that defines the object's category.
+ID Structure Breakdown
+The objnum is a 9-character string composed of two main parts: a prefix and a unique ID. The prefix defines the object's category, while the unique ID identifies the specific object within that category. The system uses zero-padding to maintain the 9-character length.
 
-Prefix	Category
-0	Major Body Systems (Planets, Moons)
-1	Asteroids
-2	Comets
-3	Spacecraft
+Prefix	Category	Description
+0	Star System	For the Sun, which is the central body.
+1	Planets & Dwarf Planets	For planets and dwarf planets, ordered by their distance from the Sun.
+2	Moons	For moons, which are numbered hierarchically based on their parent planet.
+3	Asteroids	For asteroids, using their official Minor Planet Center number.
+4	Comets	For comets, using their official periodic comet number.
+5	Spacecraft	For spacecraft, using their NORAD ID.
+6-9	Reserved	For future use.
 
 Export to Sheets
-Major Body Systems (Prefix 0)
-This ID is a 9-character string composed of a prefix, a 3-digit System ID, and a 5-digit Body ID. The primary body of a system (like a planet or the Sun) is assigned a Body ID of 00000.
+Chronological and Hierarchical Identification
+Star System (Prefix 0)
+The Sun is the central body of the solar system and is given a unique 9-digit identifier.
 
-Structure: [Prefix][System ID][Body ID]
+Structure: 0 + 00000000
 
-Example (Earth): 0 + 003 + 00000 = 000300000
+Example (The Sun): 000000000
 
-Example (The Moon): 0 + 003 + 00001 = 000300001
+Planets & Dwarf Planets (Prefix 1)
+Planets and dwarf planets are assigned a number chronologically based on their distance from the Sun. The remaining digits are 0s to distinguish them as a primary body.
 
-Asteroids (Prefix 1)
-This ID consists of the prefix 1 followed by the official Minor Planet Center number, padded with leading zeros to 8 digits.
+Structure: 1 + [Planet ID] + 000000
 
-Structure: [Prefix][Padded Asteroid Number]
+Planet ID: A two-digit number (01, 02, etc.) representing the planet's order from the Sun.
 
-Example (Ceres): 1 + 00000001 = 100000001
+Example (Mercury): 1 + 01 + 000000 = 101000000
 
-Comets (Prefix 2)
-This ID consists of the prefix 2 followed by the periodic comet number (or an internal ID), padded to 8 digits. The official alphanumeric name (e.g., "1P/Halley") is stored in a separate designation field.
+Example (Earth): 1 + 03 + 000000 = 103000000
 
-Structure: [Prefix][Padded Comet Number]
+Moons (Prefix 2)
+Moons are identified hierarchically based on their parent planet and chronologically by their discovery within that system.
 
-Example (Halley's Comet): 2 + 00000001 = 200000001
+Structure: 2 + [Planet ID] + [Moon ID]
 
-Spacecraft (Prefix 3)
-This ID consists of the prefix 3 followed by the NORAD ID, padded to 8 digits. A spacecraft's location is stored as a separate, dynamic property.
+Planet ID: A two-digit number (01, 02, etc.) representing the parent planet's order from the Sun.
 
-Structure: [Prefix][Padded NORAD ID]
+Moon ID: A four-digit number representing the moon's sequential number within the parent system. This number can be assigned chronologically by discovery or by a formal IAU designation.
 
-Example (ISS): 3 + 00025544 = 300025544
+Example (The Moon): 2 + 03 + 0001 = 20300001 (Earth is the 3rd planet, and the Moon is its 1st moon).
 
-Special Cases: Location IDs
-Virtual locations like Lagrange points are not assigned their own objnum. Instead, they are referenced by a location ID that follows the Major Body System structure. We reserve the 90000 series in the Body ID segment for these points.
+Example (Phobos, a Martian moon): 2 + 04 + 0001 = 20400001 (Mars is the 4th planet, and Phobos is its 1st moon by discovery).
 
-Example (Sun-Earth L1 Point): 000390001
+Asteroids (Prefix 3)
+Asteroids use their official Minor Planet Center number.
 
-Example (Sun-Earth L2 Point): 000390002
+Structure: 3 + [Minor Planet Center Number]
+
+Example (Ceres, number 1): 3 + 00000001 = 300000001
+
+Comets (Prefix 4)
+Comets use their official periodic comet number or an internal ID if a number is not yet assigned.
+
+Structure: 4 + [Periodic Comet Number]
+
+Example (Halley's Comet, number 1P): 4 + 00000001 = 400000001
+
+Spacecraft (Prefix 5)
+Spacecraft are identified using their official NORAD ID, padded to maintain the 9-character structure.
+
+Structure: 5 + [NORAD ID]
+
+Example (ISS, NORAD ID 25544): 5 + 00025544 = 500025544
+
+Special Cases
+Virtual locations, such as Lagrange points, are not assigned an objnum. They are referenced by a separate location ID that uses the planet ID and a reserved series of numbers for the specific point.
+
+Example (Sun-Earth L1 Point): 103 + 9001 = 1039001 (This is not a full 9-digit objnum, but a separate location ID that links to Earth, the 3rd planet).
