@@ -43,6 +43,20 @@ def generate_exoatlas_id(minor_planet_number):
         return f"3{padded_number}"
     return None
 
+def safe_float(val):
+    """Safely converts a string to a float, returns None on error."""
+    try:
+        return float(val.strip())
+    except (ValueError, IndexError):
+        return None
+
+def safe_int(val):
+    """Safely converts a string to an int, returns None on error."""
+    try:
+        return int(val.strip())
+    except (ValueError, IndexError):
+        return None
+
 def fetch_and_parse_data(url, limit=100):
     """
     Fetches the first `limit` lines from the MPCORB.DAT file and parses the data,
@@ -59,48 +73,42 @@ def fetch_and_parse_data(url, limit=100):
     lines = response.iter_lines(decode_unicode=True)
     data = []
     
-    # The data section of the file starts with the first line that has a valid name.
     header_skipped = False
     
     for i, line in enumerate(lines):
-        if not line:
+        if not line or len(line) < 170:
             continue
 
         try:
-            # Check for a valid name to identify a data line
             name = line[0:7].strip()
             if not name and not header_skipped:
                 continue
             
             header_skipped = True
             
-            # Use safe parsing with try-except blocks for fields that may be malformed
-            minor_planet_number_str = line[159:165].strip()
-            minor_planet_number = int(minor_planet_number_str) if minor_planet_number_str else None
+            # Using the new safe conversion functions
+            minor_planet_number = safe_int(line[159:165])
             exoatlas_id = generate_exoatlas_id(minor_planet_number)
             
-            h_abs_mag = float(line[8:13].strip())
-            g_slope_param = float(line[14:19].strip())
+            h_abs_mag = safe_float(line[8:13])
+            g_slope_param = safe_float(line[14:19])
             epoch = line[20:25].strip()
-            mean_anomaly = float(line[26:35].strip())
-            arg_perihelion = float(line[37:46].strip())
-            long_asc_node = float(line[48:57].strip())
-            inclination = float(line[59:68].strip())
-            eccentricity = float(line[70:79].strip())
-            mean_daily_motion = float(line[80:91].strip())
-            semimajor_axis = float(line[92:103].strip())
+            mean_anomaly = safe_float(line[26:35])
+            arg_perihelion = safe_float(line[37:46])
+            long_asc_node = safe_float(line[48:57])
+            inclination = safe_float(line[59:68])
+            eccentricity = safe_float(line[70:79])
+            mean_daily_motion = safe_float(line[80:91])
+            semimajor_axis = safe_float(line[92:103])
             orbit_type = line[166:170].strip()
             last_observation = line[105:114].strip()
-            
-            # This is the line that was likely causing the error. Now it's handled safely.
-            arc_length_str = line[115:119].strip()
-            arc_length = int(arc_length_str) if arc_length_str else None
+            arc_length = safe_int(line[115:119])
             
             data.append((name, h_abs_mag, g_slope_param, epoch, mean_anomaly, arg_perihelion,
                          long_asc_node, inclination, eccentricity, mean_daily_motion,
                          semimajor_axis, orbit_type, last_observation, arc_length, exoatlas_id))
-        except (ValueError, IndexError) as e:
-            print(f"Skipping malformed or header line {i}: {line} - Error: {e}")
+        except IndexError as e:
+            print(f"Skipping malformed line {i} (IndexError): {line}")
             continue
 
         if len(data) >= limit:
