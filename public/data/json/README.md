@@ -1,4 +1,5 @@
-ExoAtlas Object ID Nomenclature
+EXOATLAS OBJECT ID NOMENCLATURE
+
 All objects in the ExoAtlas dataset are assigned a unique, 9-character numeric identifier (objnum) for consistent data management. The ID's structure is hierarchical and chronological, revealing an object's category and its relationship to other bodies.
 
 ID Structure Breakdown
@@ -71,3 +72,4 @@ Special Cases
 Virtual locations, such as Lagrange points, are not assigned an objnum. They are referenced by a separate location ID that uses the planet ID and a reserved series of numbers for the specific point.
 
 Example (Sun-Earth L1 Point): 103 + 9001 = 1039001 (This is not a full 9-digit objnum, but a separate location ID that links to Earth, the 3rd planet).
+
