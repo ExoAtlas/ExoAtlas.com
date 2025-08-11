@@ -119,9 +119,11 @@ def fetch_and_parse_data(url, limit=100):
 
 def insert_or_update_data_into_db(data):
     """
-    Connects to the database and uses an UPSERT statement to insert new records
-    or update existing ones, now including the ExoAtlas ID.
+    Connects to the database and uses an UPSERT statement.
+    Uses robust error handling with a guarded cleanup block.
     """
+    conn = None # Initialize conn to None
+    
     if not DATABASE_URL:
         print("DATABASE_URL environment variable is not set. Cannot connect to the database.")
         return
@@ -163,11 +165,12 @@ def insert_or_update_data_into_db(data):
 
     except psycopg2.Error as e:
         print(f"Database error: {e}")
-        conn.rollback()
+        if conn:
+            conn.rollback()
     finally:
         if conn:
             conn.close()
-
+            
 if __name__ == "__main__":
     orbital_elements = fetch_and_parse_data(MPCORB_URL)
     if orbital_elements:
