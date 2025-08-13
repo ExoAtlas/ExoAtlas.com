@@ -15,3 +15,4 @@ Aug 09, 14:24:55 UTC, tweet posted successfully | On this day in 1975, the Europ
 Aug 10, 14:24:41 UTC, tweet posted successfully | In 1990, the Magellan spacecraft entered orbit around Venus, using radar to map over 98% of the planet's cloud-obscured surface in stunning detail. #Magellan #Venus
 Aug 11, 14:29:37 UTC, tweet posted successfully | On this day in 1877, astronomer Asaph Hall discovered Deimos, the smaller and more distant of Mars's two moons. #Deimos #Mars
 Aug 12, 14:27:42 UTC, tweet posted successfully | The Perseid meteor shower, one of the best of the year, peaks tonight! Debris from Comet Swift-Tuttle will streak across the sky. 🌠 #Perseids #MeteorShower
+Aug 13, 14:28:01 UTC, tweet posted successfully | Happy birthday to astronaut James "Jim" McDivitt (born 1929), commander of the Gemini 4 and Apollo 9 missions. #Astronaut
