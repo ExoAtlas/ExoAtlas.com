@@ -18,3 +18,4 @@ Aug 12, 14:27:42 UTC, tweet posted successfully | The Perseid meteor shower, one
 Aug 13, 14:28:01 UTC, tweet posted successfully | Happy birthday to astronaut James "Jim" McDivitt (born 1929), commander of the Gemini 4 and Apollo 9 missions. #Astronaut
 Aug 14, 14:27:23 UTC, tweet posted successfully | In 1984, the rings of Neptune were confirmed by astronomers André Brahic and William Hubbard. #Neptune #Rings
 Aug 15, 14:26:20 UTC, tweet posted successfully | On this day in 1977, the Big Ear radio telescope at Ohio State University detected the "Wow!" signal, a strong, narrowband radio signal from space. A famous SETI candidate. 📡 #WowSignal #SETI
+Aug 16, 14:22:49 UTC, tweet posted successfully | In 1963, the first photographs of the Earth from a geosynchronous satellite were transmitted by Syncom 2. #Syncom2 #Earth
