@@ -44,7 +44,7 @@ jobs:
         with:
           instance: ${{ env.INSTANCE_CONNECTION_NAME }}
           port: 5432
-          ip_type: PUBLIC
+          ip_type: PRIVATE
 
       - name: Test DB connection
         run: |
