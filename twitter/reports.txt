@@ -19,3 +19,4 @@ Aug 13, 14:28:01 UTC, tweet posted successfully | Happy birthday to astronaut Ja
 Aug 14, 14:27:23 UTC, tweet posted successfully | In 1984, the rings of Neptune were confirmed by astronomers André Brahic and William Hubbard. #Neptune #Rings
 Aug 15, 14:26:20 UTC, tweet posted successfully | On this day in 1977, the Big Ear radio telescope at Ohio State University detected the "Wow!" signal, a strong, narrowband radio signal from space. A famous SETI candidate. 📡 #WowSignal #SETI
 Aug 16, 14:22:49 UTC, tweet posted successfully | In 1963, the first photographs of the Earth from a geosynchronous satellite were transmitted by Syncom 2. #Syncom2 #Earth
+Aug 17, 14:23:44 UTC, tweet posted successfully | On this day in 1877, just days after finding Deimos, Asaph Hall discovered Phobos, the larger moon of Mars. #Phobos #Mars
