@@ -55,7 +55,7 @@ jobs:
         env:
           DB_USER: 'postgres'
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: 'postgres'
+          DB_NAME: 'exoatlas-data'
           GCS_BUCKET_NAME: 'exoatlas-db-bucket'
         run: |
           if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
