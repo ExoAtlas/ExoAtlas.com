@@ -39,11 +39,9 @@ jobs:
           pip install requests psycopg2-binary google-cloud-storage pandas
 
       - name: Start Cloud SQL Auth Proxy
-        uses: 'google-github-actions/cloud-sql-proxy@v2'
-        with:
-          instance: ${{ env.INSTANCE_CONNECTION_NAME }}
-          port: 5432
-          ip_type: PRIVATE
+        run: |
+          ./cloud-sql-proxy --private-ip "${{ env.INSTANCE_CONNECTION_NAME }}" &
+        shell: bash
 
       - name: Test DB connection
         run: |
