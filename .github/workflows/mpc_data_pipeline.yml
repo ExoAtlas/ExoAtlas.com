@@ -2,19 +2,32 @@ name: Daily Minor Planet Center (MPC) Data Pipeline
 
 on:
   schedule:
-    - cron: "0 0 * * *"    # 00:00 UTC daily
+    - cron: "0 0 * * *"  # 00:00 UTC daily
   workflow_dispatch:
+
+env:
+  # The project ID and database connection name are required for authentication
+  PROJECT_ID: exoatlas
+  INSTANCE_CONNECTION_NAME: exoatlas:us-central1:exoatlas-db
 
 jobs:
   fetch-and-store-data:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      PYTHONUNBUFFERED: "1"
+    permissions:
+      contents: 'read'
+      id-token: 'write' # This is required for Workload Identity Federation
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'p566178654810-zjbipq@gcp-sa-cloud-sql.iam.gserviceaccount.com'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,12 +37,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests psycopg2-binary
+          pip install requests psycopg2-binary google-cloud-storage
+
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          ./cloud-sql-proxy --private-ip "${{ env.INSTANCE_CONNECTION_NAME }}" &
+        shell: bash
 
       - name: Run Data Fetcher
         env:
-          DATABASE_URL: ${{ secrets.FLY_DATABASE_URL }}
-          USER_AGENT: 'ExoAtlas/1.0 (+https://exoatlas.com; Contact: admin@exoatlas.com)'
+          # Use a GitHub secret for your database password
+          DB_USER: 'postgres'
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
+          DB_NAME: 'exoatlas-data'
+          GCS_BUCKET_NAME: 'exoatlas-db-bucket"
         run: |
           if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
             echo "Successfully found script. Fetching and storing data..."
