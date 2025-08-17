@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 
 env:
-  # The project ID and database connection name are required for authentication
   PROJECT_ID: exoatlas
   INSTANCE_CONNECTION_NAME: exoatlas:us-central1:exoatlas-db
 
@@ -16,7 +15,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: 'read'
-      id-token: 'write' # This is required for Workload Identity Federation
+      id-token: 'write' # Required for Workload Identity Federation
 
     steps:
       - name: Checkout repository
@@ -50,14 +49,13 @@ jobs:
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client
           PGPASSWORD=${{ secrets.DB_PASSWORD }} \
-          psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data sslmode=disable" \
-            -c "select now();"
+          psql "host=127.0.0.1 port=5432 user=postgres dbname=postgres" -c "select now();"
 
       - name: Run Data Fetcher
         env:
           DB_USER: 'postgres'
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
-          DB_NAME: 'exoatlas-data'
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: 'postgres'
           GCS_BUCKET_NAME: 'exoatlas-db-bucket'
         run: |
           if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
