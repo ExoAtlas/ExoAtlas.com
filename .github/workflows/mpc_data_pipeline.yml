@@ -27,7 +27,7 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-          service_account: 'p566178654810-zjbipq@gcp-sa-cloud-sql.iam.gserviceaccount.com'
+          service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -50,7 +50,7 @@ jobs:
           DB_USER: 'postgres'
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
           DB_NAME: 'exoatlas-data'
-          GCS_BUCKET_NAME: 'exoatlas-db-bucket"
+          GCS_BUCKET_NAME: 'exoatlas-db-bucket'
         run: |
           if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
             echo "Successfully found script. Fetching and storing data..."
