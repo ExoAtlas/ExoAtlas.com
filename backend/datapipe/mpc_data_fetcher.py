@@ -2,12 +2,22 @@ import os
 import requests
 import psycopg2
 from psycopg2.extras import execute_batch
+import json
+import logging
+
+# Configure logging to print messages to the console
+logging.basicConfig(level=logging.INFO)
 
 # URL for the MPCORB.DAT file
 MPCORB_URL = "https://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT"
 
-# Database connection string from environment variables
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# Database connection details from environment variables
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_NAME = os.environ.get("DB_NAME")
+# Use localhost and port 5432 because the Cloud SQL Auth Proxy creates a local tunnel
+DB_HOST = "127.0.0.1"
+DB_PORT = 5432
 
 # Define the database table schema
 TABLE_NAME = "minor_planet_orbital_elements"
@@ -32,13 +42,8 @@ CREATE TABLE IF NOT EXISTS {} (
 """.format(TABLE_NAME)
 
 def generate_exoatlas_id(minor_planet_number):
-    """
-    Generates the 9-character ExoAtlas Object ID for an asteroid.
-    Based on your criteria: Prefix 3 + Minor Planet Center Number.
-    """
+    """Generates the 9-character ExoAtlas Object ID for an asteroid."""
     if minor_planet_number is not None:
-        # Pad the number with leading zeros to fit the 8-digit format.
-        # e.g., 1 becomes '00000001'
         padded_number = str(minor_planet_number).zfill(8)
         return f"3{padded_number}"
     return None
@@ -57,34 +62,35 @@ def safe_int(val):
     except (ValueError, IndexError):
         return None
 
-def fetch_and_parse_data(url, limit=100):
+def fetch_and_parse_data(url):
     """
-    Fetches the first `limit` lines from the MPCORB.DAT file and parses the data,
+    Fetches the data from the MPCORB.DAT file and parses it,
     with robust error handling for malformed lines.
     """
-    print(f"Fetching data from {url}...")
+    logging.info(f"Fetching data from {url}...")
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
+        logging.error(f"Error fetching data: {e}")
         return []
 
     lines = response.iter_lines(decode_unicode=True)
     data = []
     
-    header_skipped = False
-    
-    for i, line in enumerate(lines):
+    # Skip header lines
+    for line in lines:
         if not line or len(line) < 170:
             continue
-
+        if line.strip().startswith("---"):
+            break
+    
+    for line in lines:
+        if not line or len(line) < 170:
+            continue
+        
         try:
             name = line[0:7].strip()
-            if not name and not header_skipped:
-                continue
-            
-            header_skipped = True
             
             # Using the new safe conversion functions
             minor_planet_number = safe_int(line[159:165])
@@ -104,17 +110,15 @@ def fetch_and_parse_data(url, limit=100):
             last_observation = line[105:114].strip()
             arc_length = safe_int(line[115:119])
             
+            # Append the parsed data to the list
             data.append((name, h_abs_mag, g_slope_param, epoch, mean_anomaly, arg_perihelion,
                          long_asc_node, inclination, eccentricity, mean_daily_motion,
                          semimajor_axis, orbit_type, last_observation, arc_length, exoatlas_id))
-        except IndexError as e:
-            print(f"Skipping malformed line {i} (IndexError): {line}")
+        except (IndexError, ValueError) as e:
+            logging.warning(f"Skipping malformed line: {line}. Error: {e}")
             continue
 
-        if len(data) >= limit:
-            break
-
-    print(f"Successfully parsed {len(data)} lines of data.")
+    logging.info(f"Successfully parsed {len(data)} lines of data.")
     return data
 
 def insert_or_update_data_into_db(data):
@@ -122,14 +126,21 @@ def insert_or_update_data_into_db(data):
     Connects to the database and uses an UPSERT statement.
     Uses robust error handling with a guarded cleanup block.
     """
-    conn = None # Initialize conn to None
+    conn = None
     
-    if not DATABASE_URL:
-        print("DATABASE_URL environment variable is not set. Cannot connect to the database.")
+    if not all([DB_USER, DB_PASSWORD, DB_NAME]):
+        logging.error("Database environment variables are not set. Cannot connect to the database.")
         return
 
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        )
+        
         with conn.cursor() as cur:
             # Create the table if it doesn't exist
             cur.execute(TABLE_SCHEMA)
@@ -161,10 +172,10 @@ def insert_or_update_data_into_db(data):
             execute_batch(cur, upsert_query, data)
             
         conn.commit()
-        print(f"Successfully processed {len(data)} records.")
+        logging.info(f"Successfully processed {len(data)} records.")
 
     except psycopg2.Error as e:
-        print(f"Database error: {e}")
+        logging.error(f"Database error: {e}")
         if conn:
             conn.rollback()
     finally:
