@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2.extras import execute_batch
 import json
 import logging
+from google.cloud import storage
 
 # Configure logging to print messages to the console
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +16,6 @@ MPCORB_URL = "https://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT"
 DB_USER = os.environ.get("DB_USER")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_NAME = os.environ.get("DB_NAME")
-# Use localhost and port 5432 because the Cloud SQL Auth Proxy creates a local tunnel
 DB_HOST = "127.0.0.1"
 DB_PORT = 5432
 
@@ -64,8 +64,7 @@ def safe_int(val):
 
 def fetch_and_parse_data(url):
     """
-    Fetches the data from the MPCORB.DAT file and parses it,
-    with robust error handling for malformed lines.
+    Fetches the data from the MPCORB.DAT file and parses it.
     """
     logging.info(f"Fetching data from {url}...")
     try:
@@ -91,11 +90,8 @@ def fetch_and_parse_data(url):
         
         try:
             name = line[0:7].strip()
-            
-            # Using the new safe conversion functions
             minor_planet_number = safe_int(line[159:165])
             exoatlas_id = generate_exoatlas_id(minor_planet_number)
-            
             h_abs_mag = safe_float(line[8:13])
             g_slope_param = safe_float(line[14:19])
             epoch = line[20:25].strip()
@@ -110,7 +106,6 @@ def fetch_and_parse_data(url):
             last_observation = line[105:114].strip()
             arc_length = safe_int(line[115:119])
             
-            # Append the parsed data to the list
             data.append((name, h_abs_mag, g_slope_param, epoch, mean_anomaly, arg_perihelion,
                          long_asc_node, inclination, eccentricity, mean_daily_motion,
                          semimajor_axis, orbit_type, last_observation, arc_length, exoatlas_id))
@@ -122,30 +117,17 @@ def fetch_and_parse_data(url):
     return data
 
 def insert_or_update_data_into_db(data):
-    """
-    Connects to the database and uses an UPSERT statement.
-    Uses robust error handling with a guarded cleanup block.
-    """
+    """Inserts data into the database using an UPSERT statement."""
     conn = None
-    
     if not all([DB_USER, DB_PASSWORD, DB_NAME]):
-        logging.error("Database environment variables are not set. Cannot connect to the database.")
+        logging.error("Database environment variables are not set. Cannot connect.")
         return
 
     try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
-        )
-        
+        conn = psycopg2.connect(host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD)
         with conn.cursor() as cur:
-            # Create the table if it doesn't exist
             cur.execute(TABLE_SCHEMA)
             
-            # The UPSERT query now includes the exoatlas_object_id column
             upsert_query = f"""
             INSERT INTO {TABLE_NAME} (
                 name, h_abs_mag, g_slope_param, epoch, mean_anomaly, arg_perihelion,
@@ -153,36 +135,45 @@ def insert_or_update_data_into_db(data):
                 semimajor_axis, orbit_type, last_observation, arc_length, exoatlas_object_id
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (name) DO UPDATE SET
-                h_abs_mag = EXCLUDED.h_abs_mag,
-                g_slope_param = EXCLUDED.g_slope_param,
-                epoch = EXCLUDED.epoch,
-                mean_anomaly = EXCLUDED.mean_anomaly,
-                arg_perihelion = EXCLUDED.arg_perihelion,
-                long_asc_node = EXCLUDED.long_asc_node,
-                inclination = EXCLUDED.inclination,
-                eccentricity = EXCLUDED.eccentricity,
-                mean_daily_motion = EXCLUDED.mean_daily_motion,
-                semimajor_axis = EXCLUDED.semimajor_axis,
-                orbit_type = EXCLUDED.orbit_type,
-                last_observation = EXCLUDED.last_observation,
-                arc_length = EXCLUDED.arc_length,
-                exoatlas_object_id = EXCLUDED.exoatlas_object_id;
+                h_abs_mag = EXCLUDED.h_abs_mag, g_slope_param = EXCLUDED.g_slope_param,
+                epoch = EXCLUDED.epoch, mean_anomaly = EXCLUDED.mean_anomaly,
+                arg_perihelion = EXCLUDED.arg_perihelion, long_asc_node = EXCLUDED.long_asc_node,
+                inclination = EXCLUDED.inclination, eccentricity = EXCLUDED.eccentricity,
+                mean_daily_motion = EXCLUDED.mean_daily_motion, semimajor_axis = EXCLUDED.semimajor_axis,
+                orbit_type = EXCLUDED.orbit_type, last_observation = EXCLUDED.last_observation,
+                arc_length = EXCLUDED.arc_length, exoatlas_object_id = EXCLUDED.exoatlas_object_id;
             """
             
             execute_batch(cur, upsert_query, data)
-            
         conn.commit()
         logging.info(f"Successfully processed {len(data)} records.")
-
     except psycopg2.Error as e:
         logging.error(f"Database error: {e}")
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
     finally:
-        if conn:
-            conn.close()
+        if conn: conn.close()
+
+def generate_json_and_upload(bucket_name):
+    """Queries the database, generates a JSON file, and uploads it to GCS."""
+    conn = None
+    try:
+        conn = psycopg2.connect(host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD)
+        df = pd.read_sql_table(TABLE_NAME, conn)
+        json_data = df.to_json(orient='records')
+        
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob("minor_planet_data.json")
+        blob.upload_from_string(json_data, content_type='application/json')
+        
+        logging.info(f"Successfully uploaded minor_planet_data.json to GCS bucket: {bucket_name}")
+    except Exception as e:
+        logging.error(f"Error in GCS upload process: {e}")
+    finally:
+        if conn: conn.close()
             
 if __name__ == "__main__":
     orbital_elements = fetch_and_parse_data(MPCORB_URL)
     if orbital_elements:
         insert_or_update_data_into_db(orbital_elements)
+        generate_json_and_upload(os.environ.get("GCS_BUCKET_NAME"))
