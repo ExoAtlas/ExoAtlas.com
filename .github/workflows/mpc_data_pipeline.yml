@@ -40,13 +40,21 @@ jobs:
           pip install requests psycopg2-binary google-cloud-storage pandas
 
       - name: Start Cloud SQL Auth Proxy
+        uses: google-github-actions/cloud-sql-proxy@v2
+        with:
+          instance: ${{ env.INSTANCE_CONNECTION_NAME }}
+          port: 5432
+          ip_type: PUBLIC
+
+      - name: Test DB connection
         run: |
-          ./cloud-sql-proxy --private-ip "${{ env.INSTANCE_CONNECTION_NAME }}" &
-        shell: bash
+          sudo apt-get update -y && sudo apt-get install -y postgresql-client
+          PGPASSWORD=${{ secrets.DB_PASSWORD }} \
+          psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data sslmode=disable" \
+            -c "select now();"
 
       - name: Run Data Fetcher
         env:
-          # Use a GitHub secret for your database password
           DB_USER: 'postgres'
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
           DB_NAME: 'exoatlas-data'
