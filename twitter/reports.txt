@@ -20,3 +20,4 @@ Aug 14, 14:27:23 UTC, tweet posted successfully | In 1984, the rings of Neptune 
 Aug 15, 14:26:20 UTC, tweet posted successfully | On this day in 1977, the Big Ear radio telescope at Ohio State University detected the "Wow!" signal, a strong, narrowband radio signal from space. A famous SETI candidate. 📡 #WowSignal #SETI
 Aug 16, 14:22:49 UTC, tweet posted successfully | In 1963, the first photographs of the Earth from a geosynchronous satellite were transmitted by Syncom 2. #Syncom2 #Earth
 Aug 17, 14:23:44 UTC, tweet posted successfully | On this day in 1877, just days after finding Deimos, Asaph Hall discovered Phobos, the larger moon of Mars. #Phobos #Mars
+Aug 18, 14:28:35 UTC, tweet posted successfully | In 1976, the Soviet Luna 24 mission successfully returned a sample from the Moon's Mare Crisium. It was the last lunar sample return for nearly 45 years. #Luna24
