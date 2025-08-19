@@ -56,7 +56,7 @@ jobs:
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client
           PGPASSWORD=${{ secrets.DB_PASSWORD }} \
-          psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data" -c "select now();"
+          psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data sslmode=require" -c "select now();"
 
       - name: Run Data Fetcher
         env:
