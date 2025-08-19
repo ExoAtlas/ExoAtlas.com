@@ -58,7 +58,7 @@ jobs:
 
       - name: Test DB connection
         run: |
-          PGPASSWORD="${{ secrets.DB_PASSWORD }}" psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data sslmode=disable" -c "select now();"
+          PGPASSWORD="${{ secrets.DB_PASSWORD }}" psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data" -c "select now();"
 
       - name: Run Data Fetcher
         env:
