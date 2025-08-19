@@ -56,13 +56,13 @@ jobs:
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client
           PGPASSWORD=${{ secrets.DB_PASSWORD }} \
-          psql "host=127.0.0.1 port=5432 user=postgres dbname=postgres" -c "select now();"
+          psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data" -c "select now();"
 
       - name: Run Data Fetcher
         env:
           DB_USER: 'postgres'
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: 'postgres'
+          DB_NAME: 'exoatlas-data'
           GCS_BUCKET_NAME: 'exoatlas-db-bucket'
         run: |
           if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
