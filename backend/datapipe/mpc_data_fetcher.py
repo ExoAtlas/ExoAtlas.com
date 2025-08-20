@@ -21,6 +21,13 @@ DB_NAME                (required)
 GCS_BUCKET_NAME        (required)
 GCS_OBJECT_NAME        optional    default mpc/mpcorb_latest.csv
 
+Optional test/tuning env vars
+-----------------------------
+MAX_ROWS_INGEST        optional    default 0 (no limit). If >0, stop after N rows.
+SKIP_GCS_EXPORT        optional    if "1"/"true"/"yes", skip exporting CSV to GCS.
+UPSERT_BATCH_SIZE      optional    default 5000
+EXPORT_CHUNK_ROWS      optional    default 200000
+
 Notes
 -----
 - When running on GitHub-hosted runners, you must enable a PUBLIC IP on the Cloud SQL
@@ -38,7 +45,6 @@ import os
 import sys
 import time
 import gzip
-import math
 import typing as t
 from datetime import datetime, timezone
 
@@ -62,9 +68,15 @@ DB_NAME = os.getenv("DB_NAME", "exoatlas")
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "mpc/mpcorb_latest.csv")
 
-# Batch sizes
+# Batch sizes / perf
 UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "5000"))
 EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "200000"))
+
+# Test mode limiter (0 = no limit)
+MAX_ROWS_INGEST = int(os.getenv("MAX_ROWS_INGEST", "0"))
+
+# Skip GCS export?
+SKIP_GCS_EXPORT = os.getenv("SKIP_GCS_EXPORT", "").lower() in {"1", "true", "yes"}
 
 REQUEST_TIMEOUT = (10, 120)  # (connect, read) seconds
 
@@ -159,11 +171,6 @@ def stream_download_and_decompress(url: str) -> t.Iterator[str]:
     log(f"Downloading {url} ...")
     with requests.get(url, stream=True, timeout=REQUEST_TIMEOUT) as resp:
         resp.raise_for_status()
-        # Accumulate compressed bytes in chunks into a BytesIO and feed GzipFile,
-        # but to keep memory bounded, we'll feed the raw socket to GzipFile via an
-        # incremental buffer.
-        # Simplest robust method: download into a BytesIO then decompress. MPCORB gz
-        # is ~50–80MB, fits in runner memory comfortably.
         compressed = io.BytesIO()
         for chunk in resp.iter_content(chunk_size=1024 * 1024):
             if chunk:
@@ -172,7 +179,6 @@ def stream_download_and_decompress(url: str) -> t.Iterator[str]:
 
     log("Decompressing stream...")
     with gzip.GzipFile(fileobj=compressed, mode="rb") as gz:
-        # Decode line-by-line; MPC uses ASCII
         for raw in gz:
             yield raw.decode("utf-8", errors="replace")
 
@@ -184,10 +190,8 @@ def is_data_line(line: str) -> bool:
     s = line.strip("\r\n")
     if not s:
         return False
-    # Header/comment lines often start with '#', or have '-----' delimiters.
     if s.startswith("#") or s.startswith("---"):
         return False
-    # Extremely short lines are not valid data rows.
     return len(s) > 40
 
 
@@ -218,11 +222,9 @@ def export_to_gcs(conn, bucket_name: str, object_name: str) -> None:
     """
     log(f"Exporting snapshot to gs://{bucket_name}/{object_name} ...")
 
-    # Read in chunks from DB
     sql = "SELECT packed_desig, h_mag, g_slope FROM mpc_objects_raw ORDER BY packed_desig"
     chunks = pd.read_sql_query(sql, conn, chunksize=EXPORT_CHUNK_ROWS)
 
-    # Write to a temporary local CSV
     tmp_path = os.path.join("/tmp", f"mpc_export_{int(time.time())}.csv")
     first = True
     for df in chunks:
@@ -232,10 +234,8 @@ def export_to_gcs(conn, bucket_name: str, object_name: str) -> None:
         first = False
 
     if first:
-        # No rows case: create an empty CSV with headers
         pd.DataFrame(columns=["packed_desig", "h_mag", "g_slope"]).to_csv(tmp_path, index=False)
 
-    # Upload via ADC (set by github auth action)
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
@@ -247,40 +247,66 @@ def main() -> None:
     if not GCS_BUCKET_NAME:
         raise RuntimeError("GCS_BUCKET_NAME is required")
 
+    if MAX_ROWS_INGEST > 0:
+        log(f"TEST MODE: will stop after {MAX_ROWS_INGEST} rows.")
+
     log("Starting MPC data fetcher...")
 
-    # Connect DB
     conn = get_db_connection()
     log("Connected to DB.")
 
     try:
         ensure_table(conn)
 
-        # Download + ingest
         rows_buffer: list[tuple[str, str, t.Optional[float], t.Optional[float]]] = []
         total = 0
+        reached_limit = False
+
         for line in stream_download_and_decompress(MPCORB_URL):
             if not is_data_line(line):
                 continue
             packed, h, g = extract_basic_fields(line)
             if not packed:
                 continue
+
+            # If a limit is set and we're already at it, stop early.
+            if MAX_ROWS_INGEST and total >= MAX_ROWS_INGEST:
+                reached_limit = True
+                break
+
             rows_buffer.append((packed, line.rstrip("\r\n"), h, g))
+
+            # If adding this row crosses the limit, flush only the needed slice and stop.
+            if MAX_ROWS_INGEST and (total + len(rows_buffer)) >= MAX_ROWS_INGEST:
+                need = MAX_ROWS_INGEST - total
+                if need > 0:
+                    upsert_rows(conn, rows_buffer[:need])
+                    total += need
+                    log(f"Ingested {total} rows...")
+                rows_buffer = []
+                reached_limit = True
+                break
+
+            # Normal batch flush
             if len(rows_buffer) >= UPSERT_BATCH_SIZE:
                 upsert_rows(conn, rows_buffer)
                 total += len(rows_buffer)
                 log(f"Ingested {total} rows...")
                 rows_buffer.clear()
 
-        if rows_buffer:
+        # Final flush if not already at limit and buffer has remaining rows
+        if not reached_limit and rows_buffer:
             upsert_rows(conn, rows_buffer)
             total += len(rows_buffer)
             rows_buffer.clear()
 
         log(f"Ingestion complete. Total rows processed: {total}")
 
-        # Export -> GCS
-        export_to_gcs(conn, GCS_BUCKET_NAME, GCS_OBJECT_NAME)
+        # Optional export
+        if SKIP_GCS_EXPORT:
+            log("Skipping GCS export (SKIP_GCS_EXPORT is set).")
+        else:
+            export_to_gcs(conn, GCS_BUCKET_NAME, GCS_OBJECT_NAME)
 
         conn.commit()
         log("All done.")
