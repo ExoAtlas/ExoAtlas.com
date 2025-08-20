@@ -81,7 +81,7 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
       
         run: |
-          python mpc_data_fetcher.py
+          python backend/datapipe/mpc_data_fetcher.py
       
       # Optional: surface proxy logs if the job fails later
       - name: Show proxy logs (on failure)
