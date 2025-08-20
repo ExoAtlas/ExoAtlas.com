@@ -82,7 +82,7 @@ jobs:
           
           # Test-mode knobs:
           MAX_ROWS_INGEST:   "1000"
-          SKIP_GCS_EXPORT:   "1"
+          SKIP_GCS_EXPORT:   "0"
           # (optional) make batches smaller for a snappier test:
           UPSERT_BATCH_SIZE: "500"
                 
