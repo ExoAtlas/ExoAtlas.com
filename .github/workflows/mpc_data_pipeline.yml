@@ -27,50 +27,66 @@ jobs:
         with:
           workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/exoatlas'
           service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install requests psycopg2-binary google-cloud-storage pandas
 
-      - name: Download and Start Cloud SQL Auth Proxy
+      - name: Download Cloud SQL Auth Proxy v2
+        env:
+          PROXY_VERSION: v2.18.1   # keep this pinned intentionally
         run: |
-          # Use a specific version to avoid 404s due to 'latest' alias changes
-          # IMPORTANT: Replace 'vX.Y.Z' with the actual latest stable version from GitHub releases
-          # Check https://github.com/GoogleCloudPlatform/cloud-sql-proxy/releases for the latest
-          PROXY_VERSION="v2.18.1" # Example: update this to the current stable version
-          wget https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${PROXY_VERSION}/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
+          wget -q https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${PROXY_VERSION}/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
           chmod +x cloud-sql-proxy
-          # Start the Cloud SQL Auth Proxy in the background
-          # Removed --private-ip to connect via public IP
-          ./cloud-sql-proxy --port 5432 ${{ env.INSTANCE_CONNECTION_NAME }} &
-          # Wait for the proxy to start
-          sleep 5
 
+      - name: Start Cloud SQL Proxy
+        env:
+          INSTANCE_CONNECTION_NAME: ${{ env.INSTANCE_CONNECTION_NAME }}  # exoatlas:us-central1:exoatlas-db
+        run: |
+          set -euo pipefail
+          ./cloud-sql-proxy --port 5432 "$INSTANCE_CONNECTION_NAME" > proxy.log 2>&1 &
+          # Wait until port 5432 is accepting connections (max ~30s)
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break
+            sleep 1
+          done
+          (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 || { echo "Proxy failed to start"; tail -n +1 proxy.log; exit 1; }
+    
       - name: Install psql client
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client
 
       - name: Test DB connection
-        run: |
-          PGPASSWORD="${{ secrets.DB_PASSWORD }}" psql "host=127.0.0.1 port=5432 user=postgres dbname=exoatlas-data sslmode=disable" -c "select now();"
-
-      - name: Run Data Fetcher
         env:
-          DB_USER: 'postgres'
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: 'exoatlas-data'
-          GCS_BUCKET_NAME: 'exoatlas-db-bucket'
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          if [ -f "backend/datapipe/mpc_data_fetcher.py" ]; then
-            echo "Successfully found script. Fetching and storing data..."
-            python -u backend/datapipe/mpc_data_fetcher.py
-          else
-            echo "Error: backend/datapipe/mpc_data_fetcher.py not found."
-            exit 1
-          fi
+          psql "host=127.0.0.1 port=5432 user=${{ secrets.DB_USER }} dbname=${{ secrets.DB_NAME }} sslmode=disable" -c "select now();"
+
+      - name: Run data fetcher
+        env:
+          # Required by your script:
+          DB_USER:           ${{ secrets.DB_USER }}          # e.g. app_user
+          DB_PASSWORD:       ${{ secrets.DB_PASSWORD }}      # the app_user password
+          DB_NAME:           ${{ secrets.DB_NAME }}          # e.g. exoatlas
+          GCS_BUCKET_NAME:   ${{ secrets.GCS_BUCKET_NAME }}  # e.g. exoatlas-public-data
+      
+          # Already set earlier by auth@v2; left here for clarity:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
+      
+        run: |
+          python mpc_data_fetcher.py
+      
+      # Optional: surface proxy logs if the job fails later
+      - name: Show proxy logs (on failure)
+        if: failure()
+        run: |
+          echo "==== cloud-sql-proxy logs ===="
+          cat proxy.log || true
