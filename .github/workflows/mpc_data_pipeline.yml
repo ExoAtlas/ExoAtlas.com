@@ -12,7 +12,7 @@ env:
 jobs:
   fetch-and-store-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: 'read'
       id-token: 'write' # Required for Workload Identity Federation
@@ -79,7 +79,13 @@ jobs:
       
           # Already set earlier by auth@v2; left here for clarity:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
-      
+          
+          # Test-mode knobs:
+          MAX_ROWS_INGEST:   "1000"
+          SKIP_GCS_EXPORT:   "1"
+          # (optional) make batches smaller for a snappier test:
+          UPSERT_BATCH_SIZE: "500"
+                
         run: |
           python backend/datapipe/mpc_data_fetcher.py
       
