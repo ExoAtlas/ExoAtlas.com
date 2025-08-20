@@ -49,11 +49,10 @@ jobs:
 
       - name: Start Cloud SQL Proxy
         env:
-          INSTANCE_CONNECTION_NAME: ${{ env.INSTANCE_CONNECTION_NAME }}  # exoatlas:us-central1:exoatlas-db
+          INSTANCE_CONNECTION_NAME: ${{ env.INSTANCE_CONNECTION_NAME }}
         run: |
           set -euo pipefail
           ./cloud-sql-proxy --port 5432 "$INSTANCE_CONNECTION_NAME" > proxy.log 2>&1 &
-          # Wait until port 5432 is accepting connections (max ~30s)
           for i in {1..30}; do
             (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break
             sleep 1
