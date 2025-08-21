@@ -12,7 +12,7 @@ env:
 jobs:
   fetch-and-store-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: 'read'
       id-token: 'write' # Required for Workload Identity Federation
@@ -72,16 +72,16 @@ jobs:
       - name: Run data fetcher
         env:
           # Required by your script:
-          DB_USER:           ${{ secrets.DB_USER }}          # e.g. app_user
-          DB_PASSWORD:       ${{ secrets.DB_PASSWORD }}      # the app_user password
-          DB_NAME:           ${{ secrets.DB_NAME }}          # e.g. exoatlas
-          GCS_BUCKET_NAME:   ${{ secrets.GCS_BUCKET_NAME }}  # e.g. exoatlas-public-data
+          DB_USER:           ${{ secrets.DB_USER }}          
+          DB_PASSWORD:       ${{ secrets.DB_PASSWORD }}    
+          DB_NAME:           ${{ secrets.DB_NAME }}         
+          GCS_BUCKET_NAME:   ${{ secrets.GCS_BUCKET_NAME }}  
       
           # Already set earlier by auth@v2; left here for clarity:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
           
           # Test-mode knobs:
-          MAX_ROWS_INGEST:   "1000"
+          MAX_ROWS_INGEST:   "0"
           SKIP_GCS_EXPORT:   "0"
           # (optional) make batches smaller for a snappier test:
           UPSERT_BATCH_SIZE: "500"
