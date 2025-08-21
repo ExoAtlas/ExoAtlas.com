@@ -69,8 +69,8 @@ GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "mpc/mpcorb_latest.csv")
 
 # Batch sizes / perf
-UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "5000"))
-EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "200000"))
+UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "2000"))
+EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "50000"))
 
 # Test mode limiter (0 = no limit)
 MAX_ROWS_INGEST = int(os.getenv("MAX_ROWS_INGEST", "0"))
