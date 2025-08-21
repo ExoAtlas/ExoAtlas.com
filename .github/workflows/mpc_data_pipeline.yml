@@ -2,7 +2,7 @@ name: Daily Minor Planet Center (MPC) Data Pipeline
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # 00:00 UTC daily
+    - cron: "0 0 * * 0"  # 00:00 UTC Sunday each week
   workflow_dispatch:
 
 env:
