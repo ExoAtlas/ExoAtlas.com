@@ -19,7 +19,7 @@ DB_USER                (required)
 DB_PASSWORD            (required)
 DB_NAME                (required)
 GCS_BUCKET_NAME        (required)
-GCS_OBJECT_NAME        optional    default mpc/mpcorb_latest.csv
+GCS_OBJECT_NAME        optional    default workflow/mpcorb_full.csv
 
 Optional test/tuning env vars
 -----------------------------
@@ -63,7 +63,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME", "exoatlas")
 
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
-GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "mpc/mpcorb_latest.csv")
+GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "workflow/mpcorb_full.csv")
 
 # Batch sizes / perf
 UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "2000"))
