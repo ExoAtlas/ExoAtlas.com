@@ -81,7 +81,7 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
           
           # Test-mode knobs:
-          MAX_ROWS_INGEST:   "0"
+          MAX_ROWS_INGEST:   "2000"
           SKIP_GCS_EXPORT:   "0"
           # (optional) make batches smaller for a snappier test:
           UPSERT_BATCH_SIZE: "500"
