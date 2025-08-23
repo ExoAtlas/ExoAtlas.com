@@ -90,8 +90,3 @@ jobs:
         run: |
           echo "==== cloud-sql-proxy logs ===="
           cat proxy.log || true
-
-          
-     
-          
-
