@@ -15,6 +15,17 @@ DB_NAME          = os.environ["DB_NAME"]
 DB_USER          = os.environ["DB_USER"]
 DB_PASS          = os.environ["DB_PASS"]
 
+REQUIRED_ENV_VARS = [
+    "ST_USERNAME", "ST_PASSWORD",
+    "DB_NAME", "DB_USER", "DB_PASS",
+    "GOOGLE_CLOUD_PROJECT", "GCS_BUCKET",
+]
+
+def _assert_required_env():
+    missing = [k for k in REQUIRED_ENV_VARS if not os.environ.get(k)]
+    if missing:
+        raise SystemExit(f"Missing required environment variable(s): {', '.join(missing)}")
+
 BASE = "https://www.space-track.org"
 S = requests.Session()
 
@@ -26,17 +37,21 @@ def st_login():
 # -------- Alpha-5 helpers (only needed if parsing TLE text) --------
 # Alpha-5 replaces the first character of a 5-char satnum with A..Z (I/O omitted) for IDs > 99,999.
 # e.g., 'A1234' => 10*10000 + 1234 = 101234. JSON NORAD_CAT_ID already numeric; this is for TLE parsing.
-_A5_MAP = {c: i for i, c in enumerate("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ")}
+_A5_FIRST = {c: i for i, c in enumerate("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ")}
+
 def decode_alpha5_satnum(a5: str) -> int:
-    """Decode 5-char Alpha-5 to integer. Safe for numeric-only too."""
+    """Decode 5-char Alpha-5 to integer. Last 4 chars must be digits."""
     if len(a5) != 5:
         raise ValueError("Alpha-5 satnum must be 5 chars")
-    n = 0
-    for ch in a5:
-        if ch.upper() not in _A5_MAP:
-            raise ValueError(f"Invalid Alpha-5 character: {ch}")
-        n = n * 36 + _A5_MAP[ch.upper()]
-    return n
+    first, last4 = a5[0].upper(), a5[1:]
+    if not last4.isdigit():
+        raise ValueError("Alpha-5 last 4 chars must be digits")
+    if first.isdigit():
+        # Pure numeric 5-digit satnum (no Alpha-5)
+        return int(a5)
+    if first not in _A5_FIRST:
+        raise ValueError(f"Invalid Alpha-5 first char: {first}")
+    return _A5_FIRST[first] * 10000 + int(last4)
 
 # -------- Data fetch using class/gp --------
 def fetch_gp_chunk(norad_min: int, norad_max: int) -> list[dict]:
@@ -163,6 +178,7 @@ def upload_to_gcs(text, bucket_name, object_name):
 
 # -------- Main --------
 def main():
+    _assert_required_env()
     st_login()
 
     # Pull newest elset per object across catalog using gp
