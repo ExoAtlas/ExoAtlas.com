@@ -7,7 +7,7 @@ from google.cloud import storage
 SPACE_TRACK_USER = os.environ["ST_USERNAME"]
 SPACE_TRACK_PASS = os.environ["ST_PASSWORD"]
 GCP_PROJECT      = os.environ["GOOGLE_CLOUD_PROJECT"]
-GCS_BUCKET       = os.environ["GCS_BUCKET"]
+GCS_BUCKET       = os.environ["GCS_BUCKET_NAME"]
 EXPORT_PREFIX    = os.environ.get("EXPORT_PREFIX", "space-track/")
 DB_HOST          = os.environ.get("DB_HOST", "127.0.0.1")
 DB_PORT          = int(os.environ.get("DB_PORT", "5432"))
