@@ -1,5 +1,9 @@
 name: Space-Track Daily Ingest
 
+permissions:
+  contents: read
+  id-token: write
+
 on:
   schedule:
     - cron: "15 07 * * *"   # 07:15 UTC daily (~12:15 AM PT)
