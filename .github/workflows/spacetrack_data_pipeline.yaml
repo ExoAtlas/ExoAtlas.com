@@ -19,7 +19,7 @@ jobs:
     env:
       PYTHONUNBUFFERED: "1"
       GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
-      GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+      GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
       EXPORT_PREFIX: "space-track/"
       EXPORT_HOURS: "24"
       # FETCH_MODE: "DELTA"  # uncomment to switch to delta pulls
