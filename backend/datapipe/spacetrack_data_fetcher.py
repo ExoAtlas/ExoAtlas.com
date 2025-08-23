@@ -18,7 +18,7 @@ DB_PASS          = os.environ["DB_PASS"]
 REQUIRED_ENV_VARS = [
     "ST_USERNAME", "ST_PASSWORD",
     "DB_NAME", "DB_USER", "DB_PASS",
-    "GOOGLE_CLOUD_PROJECT", "GCS_BUCKET",
+    "GOOGLE_CLOUD_PROJECT", "GCS_BUCKET_NAME",
 ]
 
 def _assert_required_env():
