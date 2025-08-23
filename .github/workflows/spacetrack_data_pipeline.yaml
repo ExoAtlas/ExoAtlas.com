@@ -32,11 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests psycopg2-binary google-cloud-storage
 
-      # —— Auth to GCP for Cloud Storage upload ——
-      - name: Configure gcloud credentials
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY_JSON }}
+          workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/exoatlas'
+          service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
+          create_credentials_file: true
+          export_environment_variables: true
 
       # —— Start Cloud SQL Auth Proxy (Postgres) ——
       - name: Download & start Cloud SQL Auth Proxy
