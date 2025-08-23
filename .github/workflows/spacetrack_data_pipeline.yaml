@@ -19,8 +19,17 @@ jobs:
       # SINCE_ISO: "2025-08-22T00:00:00" # optional override
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/exoatlas'
+          service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,15 +40,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests psycopg2-binary google-cloud-storage
-
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/exoatlas'
-          service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
-          create_credentials_file: true
-          export_environment_variables: true
 
       # —— Start Cloud SQL Auth Proxy (Postgres) ——
       - name: Download & start Cloud SQL Auth Proxy
