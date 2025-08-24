@@ -26,3 +26,4 @@ Aug 20, 14:27:02 UTC, tweet posted successfully | On this day in 1975, NASA laun
 Aug 21, 14:26:39 UTC, tweet posted successfully | In 2017, a spectacular total solar eclipse swept across the continental United States, captivating millions of observers. 🌘 #SolarEclipse #Eclipse2017
 Aug 22, 14:25:25 UTC, tweet posted successfully | Happy birthday to astronaut Gus Grissom (born 1926), one of the original Mercury Seven astronauts and the first American to fly in space twice. #GusGrissom
 Aug 23, 14:21:46 UTC, tweet posted successfully | On this day in 1966, the Lunar Orbiter 1 took the first-ever photograph of Earth from the vicinity of the Moon. 🌍 #Earthrise
+Aug 24, 14:21:52 UTC, tweet posted successfully | In 2006, the International Astronomical Union (IAU) officially reclassified Pluto as a dwarf planet. A controversial but defining moment in astronomy. #Pluto
