@@ -27,3 +27,4 @@ Aug 21, 14:26:39 UTC, tweet posted successfully | In 2017, a spectacular total s
 Aug 22, 14:25:25 UTC, tweet posted successfully | Happy birthday to astronaut Gus Grissom (born 1926), one of the original Mercury Seven astronauts and the first American to fly in space twice. #GusGrissom
 Aug 23, 14:21:46 UTC, tweet posted successfully | On this day in 1966, the Lunar Orbiter 1 took the first-ever photograph of Earth from the vicinity of the Moon. 🌍 #Earthrise
 Aug 24, 14:21:52 UTC, tweet posted successfully | In 2006, the International Astronomical Union (IAU) officially reclassified Pluto as a dwarf planet. A controversial but defining moment in astronomy. #Pluto
+Aug 25, 14:27:21 UTC, tweet posted successfully | On this day in 1989, Voyager 2 made its closest approach to Neptune, giving humanity its first close-up look at the distant ice giant and its moon Triton. #Voyager2 #Neptune
