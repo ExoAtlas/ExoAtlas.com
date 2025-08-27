@@ -29,3 +29,4 @@ Aug 23, 14:21:46 UTC, tweet posted successfully | On this day in 1966, the Lunar
 Aug 24, 14:21:52 UTC, tweet posted successfully | In 2006, the International Astronomical Union (IAU) officially reclassified Pluto as a dwarf planet. A controversial but defining moment in astronomy. #Pluto
 Aug 25, 14:27:21 UTC, tweet posted successfully | On this day in 1989, Voyager 2 made its closest approach to Neptune, giving humanity its first close-up look at the distant ice giant and its moon Triton. #Voyager2 #Neptune
 Aug 26, 14:25:20 UTC, tweet posted successfully | Happy birthday to Benjamin P. Epps (born 1888), an early aviation pioneer whose work contributed to the future of flight. #Aviation
+Aug 27, 14:24:46 UTC, tweet posted successfully | In 1962, the Mariner 2 spacecraft was launched to Venus. It would become the first spacecraft to successfully fly by another planet. #Mariner2
