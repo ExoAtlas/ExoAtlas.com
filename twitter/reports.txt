@@ -31,3 +31,4 @@ Aug 25, 14:27:21 UTC, tweet posted successfully | On this day in 1989, Voyager 2
 Aug 26, 14:25:20 UTC, tweet posted successfully | Happy birthday to Benjamin P. Epps (born 1888), an early aviation pioneer whose work contributed to the future of flight. #Aviation
 Aug 27, 14:24:46 UTC, tweet posted successfully | In 1962, the Mariner 2 spacecraft was launched to Venus. It would become the first spacecraft to successfully fly by another planet. #Mariner2
 Aug 28, 14:25:38 UTC, tweet posted successfully | On this day in 1789, William Herschel discovered Enceladus, a moon of Saturn now known for its massive subsurface ocean and icy plumes. 🪐 #Enceladus
+Aug 29, 14:23:59 UTC, tweet posted successfully | Happy birthday to astronaut and engineer C. Gordon Fullerton (born 1936), who piloted the third Space Shuttle mission and commanded the seventh. #SpaceShuttle
