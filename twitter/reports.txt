@@ -33,3 +33,4 @@ Aug 27, 14:24:46 UTC, tweet posted successfully | In 1962, the Mariner 2 spacecr
 Aug 28, 14:25:38 UTC, tweet posted successfully | On this day in 1789, William Herschel discovered Enceladus, a moon of Saturn now known for its massive subsurface ocean and icy plumes. 🪐 #Enceladus
 Aug 29, 14:23:59 UTC, tweet posted successfully | Happy birthday to astronaut and engineer C. Gordon Fullerton (born 1936), who piloted the third Space Shuttle mission and commanded the seventh. #SpaceShuttle
 Aug 30, 14:20:36 UTC, tweet posted successfully | On this day in 1983, Guion Bluford became the first African American in space, launching aboard the Space Shuttle Challenger on mission STS-8. 🚀 #GuionBluford
+Aug 31, 14:21:00 UTC, tweet posted successfully | In 1966, the first flight of the Hawker Siddeley Harrier took place. The V/STOL capabilities of aircraft like the Harrier influenced future aerospace design. #Aviation
