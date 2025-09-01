@@ -1,3 +1,67 @@
+"""
+Daily JPL Horizons planet fetcher & loader.
+
+What this script does
+---------------------
+1) Queries the JPL Horizons API (text mode) for heliocentric **osculating elements**
+   for the 8 major planets at one epoch (today → today+1 day, step=1d).
+   - Extracted fields per planet: a, e, i, Ω, ω, ν, epoch.
+   - Adds static physical constants bundled in this file (radius r, μ, rotation params).
+2) Normalizes records and writes a **CSV** to /tmp/<OUT_CSV_NAME>.
+3) **Upserts** the rows into PostgreSQL (via Cloud SQL Auth Proxy on 127.0.0.1:5432)
+   into table **public.planet_catalog** using `objnum` as the primary key.
+   - Stored columns: objnum, category, name, naif_id, a, e, i, omega_big (Ω), omega_small (ω),
+     nu_true (ν), epoch, radius_km, mu_km3s2, rot_rate, rot_lat, rot_lon.
+4) Uploads the CSV to **Google Cloud Storage** (bucket/object configurable).
+5) Produces a compact **JSON** array in /tmp/<OUT_JSON_NAME> and uploads it to
+   **Cloudflare R2** (S3-compatible). Both GCS and R2 uploads set Cache-Control
+   for reasonable edge caching.
+
+Environment variables expected
+------------------------------
+# PostgreSQL (choose either DATABASE_URL or discrete PG* vars)
+PGHOST                 default 127.0.0.1  (Cloud SQL Auth Proxy local listener)
+PGPORT                 default 5432
+PGUSER                 (required if no DATABASE_URL)
+PGPASSWORD             (required if no DATABASE_URL)
+PGDATABASE             (required if no DATABASE_URL)
+DATABASE_URL           optional  e.g. postgres://user:pass@host:5432/dbname?sslmode=disable
+                       (When using the proxy, ensure sslmode=disable.)
+
+# Google Cloud Storage (uses Application Default Credentials via OIDC or SA key)
+GCS_BUCKET_NAME        (required)
+GCS_OBJECT_NAME        optional  default workflow/planets.csv
+
+# Cloudflare R2 (S3-compatible)
+R2_ENDPOINT            (required) 
+R2_ACCESS_KEY_ID       (required)
+R2_SECRET_ACCESS_KEY   (required)
+R2_BUCKET              (required)
+R2_JSON_KEY            optional  default planets.json
+                       (If any R2 var is missing, the R2 upload is skipped.)
+
+# Output filenames (written to /tmp/)
+OUT_CSV_NAME           optional  default planets.csv
+OUT_JSON_NAME          optional  default planets.json
+
+Operational notes
+-----------------
+- Expect the **Cloud SQL Auth Proxy** to be started by the workflow before this script runs.
+  With the proxy on localhost, the DB client should use sslmode=disable (the proxy handles TLS).
+- GCS auth: use **GitHub OIDC → google-github-actions/auth** so the GCS client picks up
+  short-lived credentials via ADC; no long-lived keys needed.
+- Horizons etiquette: the script sleeps ~1s between requests to be polite.
+- Failure handling: DB/GCS/R2 steps log errors and continue so one failure doesn’t hide others.
+- Idempotent loads: UPSERT ensures repeated runs won’t duplicate rows.
+- Security: keep DB creds and R2 keys in GitHub Secrets; avoid echoing envs in logs.
+
+Change log (high level)
+-----------------------
+- Writes CSV to GCS instead of committing artifacts to the repo.
+- Uses table **public.planet_catalog** (replaces previous table name).
+- Removed report file writing; logs are printed to stdout for CI visibility.
+"""
+
 import os, sys, re, json, time, csv
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -23,6 +87,11 @@ PLANET_DATA = {
     "000800000": {"id": "899", "name": "Neptune",  "r": "24622",  "μ": "6835099.3",  "R_rate": "0.00624",   "R_lat": "43.46", "R_lon": "299.33"}
 }
 
+# Local JSON (still written so your web app can build locally if needed)
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+LOCAL_JSON_PATH = PROJECT_ROOT / "public" / "data" / "json" / "planets.json"
+
 # One daily epoch window
 START_TIME_DT = datetime.now(timezone.utc)
 STOP_TIME_DT  = START_TIME_DT + timedelta(days=1)
@@ -36,14 +105,14 @@ PGPORT = int(os.environ.get("PGPORT", "5432"))
 PGUSER = os.environ.get("PGUSER")
 PGPASSWORD = os.environ.get("PGPASSWORD")
 PGDATABASE = os.environ.get("PGDATABASE")
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL")  # optional override
 
 # GCS
 GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
 GCS_OBJECT_NAME = os.environ.get("GCS_OBJECT_NAME", "workflow/planets.csv")
 
 # R2 (S3-compatible)
-R2_ENDPOINT = os.environ.get("R2_ENDPOINT")
+R2_ENDPOINT = os.environ.get("R2_ENDPOINT")  # https://<accountid>.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.environ.get("R2_BUCKET")
@@ -55,7 +124,7 @@ OUT_JSON_NAME = os.environ.get("OUT_JSON_NAME", "planets.json")
 TMP_CSV_PATH = Path("/tmp") / OUT_CSV_NAME
 TMP_JSON_PATH = Path("/tmp") / OUT_JSON_NAME
 
-TABLE_NAME = "public.planet_catalog"
+TABLE_NAME = "public.planet_catalog"   # <-- renamed table
 
 # ------------------------------ Helpers ------------------------------
 
@@ -283,10 +352,9 @@ def main() -> int:
     # 5) JSON → local + R2
     try:
         TMP_JSON_PATH.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
-        LOCAL_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
-        LOCAL_JSON_PATH.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
-        obj = r2_upload_json(TMP_JSON_PATH, R2_BUCKET, R2_JSON_KEY)
-        print(f"[ok] R2 uploaded: {obj}")
+        if all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_JSON_KEY]):
+            obj = r2_upload_json(TMP_JSON_PATH, R2_BUCKET, R2_JSON_KEY)
+            print(f"[ok] R2 uploaded: {obj}")
     except Exception as e:
         print(f"[err] R2 upload failed: {e}")
 
