@@ -23,11 +23,6 @@ PLANET_DATA = {
     "000800000": {"id": "899", "name": "Neptune",  "r": "24622",  "μ": "6835099.3",  "R_rate": "0.00624",   "R_lat": "43.46", "R_lon": "299.33"}
 }
 
-# Local JSON (still written so your web app can build locally if needed)
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
-LOCAL_JSON_PATH = PROJECT_ROOT / "public" / "data" / "json" / "planets.json"
-
 # One daily epoch window
 START_TIME_DT = datetime.now(timezone.utc)
 STOP_TIME_DT  = START_TIME_DT + timedelta(days=1)
@@ -41,14 +36,14 @@ PGPORT = int(os.environ.get("PGPORT", "5432"))
 PGUSER = os.environ.get("PGUSER")
 PGPASSWORD = os.environ.get("PGPASSWORD")
 PGDATABASE = os.environ.get("PGDATABASE")
-DATABASE_URL = os.environ.get("DATABASE_URL")  # optional override
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 # GCS
 GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
 GCS_OBJECT_NAME = os.environ.get("GCS_OBJECT_NAME", "workflow/planets.csv")
 
 # R2 (S3-compatible)
-R2_ENDPOINT = os.environ.get("R2_ENDPOINT")  # https://<accountid>.r2.cloudflarestorage.com
+R2_ENDPOINT = os.environ.get("R2_ENDPOINT")
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.environ.get("R2_BUCKET")
@@ -60,7 +55,7 @@ OUT_JSON_NAME = os.environ.get("OUT_JSON_NAME", "planets.json")
 TMP_CSV_PATH = Path("/tmp") / OUT_CSV_NAME
 TMP_JSON_PATH = Path("/tmp") / OUT_JSON_NAME
 
-TABLE_NAME = "public.planet_catalog"   # <-- renamed table
+TABLE_NAME = "public.planet_catalog"
 
 # ------------------------------ Helpers ------------------------------
 
