@@ -36,3 +36,4 @@ Aug 30, 14:20:36 UTC, tweet posted successfully | On this day in 1983, Guion Blu
 Aug 31, 14:21:00 UTC, tweet posted successfully | In 1966, the first flight of the Hawker Siddeley Harrier took place. The V/STOL capabilities of aircraft like the Harrier influenced future aerospace design. #Aviation
 Sep 01, 14:24:32 UTC, tweet posted successfully | On this day in 1979, the Pioneer 11 spacecraft became the first human-made object to fly by Saturn, passing just 21,000 km from its cloud tops. 🪐 #Pioneer11 #Saturn
 Sep 02, 14:26:40 UTC, tweet posted successfully | Happy birthday to astronaut Frank Drake (born 1930), a pioneer in the search for extraterrestrial intelligence (SETI) and creator of the Drake Equation. #SETI
+Sep 03, 14:24:37 UTC, tweet posted successfully | In 1976, the Viking 2 lander successfully touched down on Mars in the Utopia Planitia, beginning its 3.5-year mission to study the Martian surface. 🔴 #Viking2 #Mars
