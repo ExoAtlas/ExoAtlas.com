@@ -112,22 +112,29 @@ def get_db_connection():
     conn.autocommit = False
     return conn
 
+def column_exists(conn, table: str, column: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = %s
+              AND column_name = %s
+            LIMIT 1
+        """, (table, column))
+        return cur.fetchone() is not None
+
 def ensure_table(conn) -> None:
     """
-    Ensure table exists with split fields and robust identifiers.
-    Key points:
-      - object_id TEXT PRIMARY KEY (number if numbered else provisional)
-      - mp_number INT NULL
-      - prov_desig TEXT NULL
-      - name TEXT NOT NULL (display)
-      - packed_desig TEXT NULL (original right-edge text; optional but useful)
+    Create/upgrade schema and safely enforce NOT NULL on `name`
+    AFTER backfilling legacy rows.
     """
     ddl = """
     CREATE TABLE IF NOT EXISTS mpc_objects_raw (
         object_id              TEXT PRIMARY KEY,
         mp_number              INTEGER NULL,
         prov_desig             TEXT NULL,
-        name                   TEXT NOT NULL,
+        name                   TEXT NULL,          -- set NOT NULL later after backfill
         packed_desig           TEXT NULL,
         raw_line               TEXT NOT NULL,
         h_mag                  REAL NULL,
@@ -146,8 +153,7 @@ def ensure_table(conn) -> None:
     alters = [
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mp_number INTEGER NULL;",
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS prov_desig TEXT NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS name TEXT;",
-        "ALTER TABLE mpc_objects_raw ALTER COLUMN name SET NOT NULL;",
+        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS name TEXT NULL;",
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS packed_desig TEXT NULL;",
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS h_mag REAL NULL;",
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS g_slope REAL NULL;",
@@ -161,10 +167,43 @@ def ensure_table(conn) -> None:
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS semimajor_axis_au REAL NULL;",
         "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW();",
     ]
+
     with conn.cursor() as cur:
         cur.execute(ddl)
         for stmt in alters:
             cur.execute(stmt)
+
+        # --- Backfill `name` from legacy `obj_name` if that column exists ---
+        if column_exists(conn, "mpc_objects_raw", "obj_name"):
+            cur.execute("""
+                UPDATE mpc_objects_raw
+                SET name = COALESCE(name, NULLIF(btrim(obj_name), ''))
+                WHERE name IS NULL OR btrim(name) = '';
+            """)
+
+        # --- Backfill remaining NULL/blank names from prov_desig / packed_desig / object_id ---
+        cur.execute("""
+            UPDATE mpc_objects_raw
+            SET name = COALESCE(
+                NULLIF(btrim(name), ''),
+                NULLIF(btrim(prov_desig), ''),
+                NULLIF(btrim(packed_desig), ''),
+                NULLIF(btrim(object_id), '')
+            )
+            WHERE name IS NULL OR btrim(name) = '';
+        """)
+
+        # Check if any NULL/blank remain; only then enforce NOT NULL
+        cur.execute("SELECT COUNT(*) FROM mpc_objects_raw WHERE name IS NULL OR btrim(name) = ''")
+        remaining = cur.fetchone()[0]
+
+        if remaining == 0:
+            cur.execute("ALTER TABLE mpc_objects_raw ALTER COLUMN name SET NOT NULL;")
+        else:
+            # Don’t fail the run; finish upgrading but leave it nullable. We’ll fill as new data ingests.
+            # If you want to see how many, they’re logged:
+            print(f"[schema] Warning: {remaining} rows still missing `name`; keeping column nullable this run.", flush=True)
+
     conn.commit()
 
 # ---------------------- Parsing ----------------------------
