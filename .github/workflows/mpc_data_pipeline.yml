@@ -38,7 +38,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install requests psycopg2-binary google-cloud-storage pandas
+          pip install requests psycopg2-binary google-cloud-storage pandas boto3
 
       - name: Download Cloud SQL Auth Proxy v2
         env:
