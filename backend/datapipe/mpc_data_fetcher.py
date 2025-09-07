@@ -72,7 +72,7 @@ R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.getenv("R2_BUCKET")
 R2_JSON_KEY = os.getenv("R2_JSON_KEY", "mpcorb.json")
 
-OUT_JSON_NAME = os.getenv("OUT_JSON_NAME", "mpcorb.json")
+OUT_JSON_NAME = os.getenv("OUT_JSON_NAME", "asteroids.json")
 TMP_JSON_PATH = Path("/tmp") / OUT_JSON_NAME
 
 # Batch sizes / perf
