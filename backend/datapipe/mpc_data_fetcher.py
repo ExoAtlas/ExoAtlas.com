@@ -1,33 +1,4 @@
-"""
-Daily Minor Planet Center (MPC) data fetcher & loader — robust ID/Name model + R2 JSON.
-
-What this script does
----------------------
-1) Downloads MPCORB (gzip) and parses one-line elements.
-2) Parses the right-hand "readable designation" into a stable, app-friendly model:
-   - If numbered: "<number> <IAU name>"   → mp_number=<int>, name=<IAU name>, object_id=<number>, prov_desig=NULL
-   - If provisional only: "YYYY CODE..."   → mp_number=NULL, name=<provisional>, object_id=<provisional>, prov_desig=<provisional>
-   (We also store the original right-edge text in 'packed_desig' for debugging/migration.)
-3) Upserts into Postgres (via Cloud SQL Auth Proxy) keyed by object_id.
-4) Exports CSV to GCS (includes id/name/number/provisional).
-5) Writes compact JSON and (optionally) uploads to Cloudflare R2 (S3-compatible) if R2_* envs are set.
-
-Environment variables expected
-------------------------------
-DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME             (Postgres)
-GCS_BUCKET_NAME (required), GCS_OBJECT_NAME (optional)      (GCS CSV)
-MAX_ROWS_INGEST, SKIP_GCS_EXPORT, UPSERT_BATCH_SIZE, etc.   (optional)
-
-# Cloudflare R2 (S3-compatible) — all required to enable R2 upload
-R2_ENDPOINT            e.g. https://<accountid>.r2.cloudflarestorage.com
-R2_ACCESS_KEY_ID
-R2_SECRET_ACCESS_KEY
-R2_BUCKET              e.g. exoatlas-public
-R2_JSON_KEY            optional; default mpcorb.json
-
-# Output JSON filename (local /tmp before upload)
-OUT_JSON_NAME          optional; default mpcorb.json
-"""
+# mpc_data_fetcher.py
 
 from __future__ import annotations
 
@@ -48,7 +19,7 @@ from psycopg2.extras import execute_batch
 import pandas as pd
 from google.cloud import storage
 
-# ---- R2 (S3-compat) ----
+# ---- R2 (S3-compatible) ----
 import boto3
 from botocore.client import Config
 
@@ -63,17 +34,23 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
-GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "workflow/mpcorb_full.csv")
+# fixed spelling: default CSV object key
+GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "workflow/asteroids.csv")
 
 # R2 envs (optional; if any missing, JSON upload to R2 is skipped)
 R2_ENDPOINT = os.getenv("R2_ENDPOINT")
 R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.getenv("R2_BUCKET")
-R2_JSON_KEY = os.getenv("R2_JSON_KEY", "mpcorb.json")
+
+# Folder/prefix where shards will be written on R2, e.g. "asteroids/"
+R2_PREFIX = os.getenv("R2_PREFIX", "asteroids/")
+# Max records per shard file
+R2_MAX_JSON_RECORDS = int(os.getenv("R2_MAX_JSON_RECORDS", "50000"))
 
 OUT_JSON_NAME = os.getenv("OUT_JSON_NAME", "asteroids.json")
-TMP_JSON_PATH = Path("/tmp") / OUT_JSON_NAME
+TMP_DIR = Path("/tmp")
+TMP_JSON_PATH = TMP_DIR / OUT_JSON_NAME
 
 # Batch sizes / perf
 UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "2000"))
@@ -126,15 +103,15 @@ def column_exists(conn, table: str, column: str) -> bool:
 
 def ensure_table(conn) -> None:
     """
-    Create/upgrade schema and safely enforce NOT NULL on `name`
-    AFTER backfilling legacy rows.
+    Create/upgrade schema. Safe on fresh or legacy installs.
     """
+    # Create table if missing
     ddl = """
     CREATE TABLE IF NOT EXISTS mpc_objects_raw (
-        object_id              TEXT PRIMARY KEY,
+        object_id              TEXT,
         mp_number              INTEGER NULL,
         prov_desig             TEXT NULL,
-        name                   TEXT NULL,          -- set NOT NULL later after backfill
+        name                   TEXT NULL,
         packed_desig           TEXT NULL,
         raw_line               TEXT NOT NULL,
         h_mag                  REAL NULL,
@@ -150,59 +127,50 @@ def ensure_table(conn) -> None:
         last_updated           TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     """
-    alters = [
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mp_number INTEGER NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS prov_desig TEXT NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS name TEXT NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS packed_desig TEXT NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS h_mag REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS g_slope REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS epoch_mjd INTEGER NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mean_anomaly_deg REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS arg_perihelion_deg REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS long_asc_node_deg REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS inclination_deg REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS eccentricity REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mean_daily_motion_deg REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS semimajor_axis_au REAL NULL;",
-        "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW();",
-    ]
-
     with conn.cursor() as cur:
         cur.execute(ddl)
+
+        # Add columns if a very old table exists
+        alters = [
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS object_id TEXT;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mp_number INTEGER NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS prov_desig TEXT NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS name TEXT NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS packed_desig TEXT NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS h_mag REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS g_slope REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS epoch_mjd INTEGER NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mean_anomaly_deg REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS arg_perihelion_deg REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS long_asc_node_deg REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS inclination_deg REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS eccentricity REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS mean_daily_motion_deg REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS semimajor_axis_au REAL NULL;",
+            "ALTER TABLE mpc_objects_raw ADD COLUMN IF NOT EXISTS last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW();",
+        ]
         for stmt in alters:
             cur.execute(stmt)
 
-        # --- Backfill `name` from legacy `obj_name` if that column exists ---
-        if column_exists(conn, "mpc_objects_raw", "obj_name"):
-            cur.execute("""
-                UPDATE mpc_objects_raw
-                SET name = COALESCE(name, NULLIF(btrim(obj_name), ''))
-                WHERE name IS NULL OR btrim(name) = '';
-            """)
-
-        # --- Backfill remaining NULL/blank names from prov_desig / packed_desig / object_id ---
+        # Create a unique index on object_id to support upsert even if PK wasn't declared initially
         cur.execute("""
-            UPDATE mpc_objects_raw
-            SET name = COALESCE(
-                NULLIF(btrim(name), ''),
-                NULLIF(btrim(prov_desig), ''),
-                NULLIF(btrim(packed_desig), ''),
-                NULLIF(btrim(object_id), '')
-            )
-            WHERE name IS NULL OR btrim(name) = '';
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE schemaname='public' AND indexname='mpc_objects_raw_object_id_key'
+                ) THEN
+                    CREATE UNIQUE INDEX mpc_objects_raw_object_id_key ON mpc_objects_raw (object_id);
+                END IF;
+            END$$;
         """)
 
-        # Check if any NULL/blank remain; only then enforce NOT NULL
-        cur.execute("SELECT COUNT(*) FROM mpc_objects_raw WHERE name IS NULL OR btrim(name) = ''")
-        remaining = cur.fetchone()[0]
-
-        if remaining == 0:
-            cur.execute("ALTER TABLE mpc_objects_raw ALTER COLUMN name SET NOT NULL;")
-        else:
-            # Don’t fail the run; finish upgrading but leave it nullable. We’ll fill as new data ingests.
-            # If you want to see how many, they’re logged:
-            print(f"[schema] Warning: {remaining} rows still missing `name`; keeping column nullable this run.", flush=True)
+        # Make sure name is at least filled from other designations if blank (no reference to object_id here)
+        cur.execute("""
+            UPDATE mpc_objects_raw
+            SET name = COALESCE(NULLIF(btrim(name), ''), NULLIF(btrim(prov_desig), ''), NULLIF(btrim(packed_desig), ''))
+            WHERE name IS NULL OR btrim(name) = '';
+        """)
 
     conn.commit()
 
@@ -221,7 +189,7 @@ def try_parse_int(slice_text: str) -> t.Optional[int]:
         return None
 
 def extract_packed_designation(line: str) -> str | None:
-    """Right-edge 'readable designation' (1-based ~167–194)."""
+    """Right-edge 'readable designation' (MPCORB fixed-width ~167–194, 1-based)."""
     if not line or len(line) < 170:
         return None
     return line[166:194].strip() or None
@@ -249,48 +217,52 @@ def extract_orbital_elements(line: str) -> dict[str, t.Optional[float | int]]:
         "semimajor_axis_au":     try_parse_float(line[92:103]) if len(line) >= 103 else None,
     }
 
-# Provisional-only regex (e.g., "1998 KD3", "2004 MN4", "2010 AB", "2000 SG344", "2015 P5")
+# Provisional-only regex (e.g., "1998 KD3", "2004 MN4", "2010 AB", "2000 SG344")
 _PROV_RE = re.compile(r"^(?P<year>\d{4})\s+(?P<code>[A-Z]{1,2}\d{0,4}[A-Z]?)$")
 
-def parse_readable_designation(readable: str) -> dict[str, t.Optional[str]]:
+# Variants like "(100000) Astronautica"  or "100000 Astronautica"
+_NUMBERED_RE = re.compile(r"^\(?(?P<num>\d+)\)?\s+(?P<name>.+)$")
+
+def parse_readable_designation(readable: str) -> dict[str, t.Optional[str | int]]:
     """
-    Returns:
-      mp_number (str) or None
-      prov_desig (str) or None
-      name (str) not None
-      object_id (str) not None
+    Rules you asked for:
+      - Numbered asteroid "(100000) Astronautica" → id=100000, name="Astronautica", number=100000, provisional=None
+      - Provisional-only "1998 KD3" → id=None, name="1998 KD3", number=None, provisional="1998 KD3"
     """
     s = " ".join((readable or "").split())
     if not s:
         return dict(mp_number=None, prov_desig=None, name=None, object_id=None)
 
-    # Numbered + name: "<digits> <rest>"
-    first, *rest = s.split(" ", 1)
-    if first.isdigit() and rest:
-        mp_number = first
-        name = rest[0]  # rest of string as IAU name
+    # Numbered + name (with or without parentheses around the number)
+    m = _NUMBERED_RE.match(s)
+    if m and m.group("num").isdigit():
+        mp_number = int(m.group("num"))
+        name = m.group("name").strip()
+        # If someone accidentally included parentheses around name, normalize
+        if name.startswith(")") and len(name) > 1:
+            name = name[1:].strip()
         return {
             "mp_number": mp_number,
             "prov_desig": None,
             "name": name,
-            "object_id": mp_number,
+            "object_id": mp_number,   # <-- numeric ID
         }
 
-    # Provisional only: "YYYY CODE..."
+    # Provisional only
     if _PROV_RE.match(s):
         return {
             "mp_number": None,
             "prov_desig": s,
             "name": s,
-            "object_id": s,
+            "object_id": None,        # <-- per your requirement: NULL id for provisional-only
         }
 
-    # Fallback: treat entire string as a display name and key
+    # Fallback: treat entire string as a display name; keep id None (not numbered)
     return {
         "mp_number": None,
         "prov_desig": None,
         "name": s,
-        "object_id": s,
+        "object_id": None,
     }
 
 # ---------------------- IO: download/decompress ------------
@@ -381,7 +353,7 @@ def export_to_gcs(conn, bucket_name: str, object_name: str) -> None:
           long_asc_node_deg, inclination_deg, eccentricity,
           mean_daily_motion_deg, semimajor_axis_au
         FROM mpc_objects_raw
-        ORDER BY object_id
+        ORDER BY COALESCE(mp_number, 2147483647), name
     """
     chunks = pd.read_sql_query(sql, conn, chunksize=EXPORT_CHUNK_ROWS)
     tmp_path = os.path.join("/tmp", f"mpc_export_{int(time.time())}.csv")
@@ -404,28 +376,41 @@ def export_to_gcs(conn, bucket_name: str, object_name: str) -> None:
     blob.upload_from_filename(tmp_path)
     log("GCS upload complete.")
 
-def r2_upload_json(json_path: Path, bucket: str, key: str) -> str:
+def _r2_client():
     session = boto3.session.Session()
-    s3 = session.client(
+    return session.client(
         service_name="s3",
         aws_access_key_id=R2_ACCESS_KEY_ID,
         aws_secret_access_key=R2_SECRET_ACCESS_KEY,
         endpoint_url=R2_ENDPOINT,
         config=Config(signature_version="s3v4"),
     )
-    extra = {
-        "ContentType": "application/json; charset=utf-8",
-        "CacheControl": "public, max-age=86400",  # 1 day; tune per your cache strategy
-    }
-    s3.upload_file(str(json_path), bucket, key, ExtraArgs=extra)
-    return f"{bucket}/{key}"
 
-def export_json_and_maybe_upload(conn) -> None:
+def r2_upload_file(local_path: Path, key: str) -> None:
+    s3 = _r2_client()
+    extra = {
+        "CacheControl": "public, max-age=86400",
+    }
+    # ContentType by extension
+    if key.endswith(".json"):
+        extra["ContentType"] = "application/json; charset=utf-8"
+    elif key.endswith(".csv"):
+        extra["ContentType"] = "text/csv; charset=utf-8"
+    s3.upload_file(str(local_path), R2_BUCKET, key, ExtraArgs=extra)
+
+def export_json_shards_and_manifest(conn) -> None:
     """
-    Emit compact JSON list for your web app:
-      id (=object_id), name, number (=mp_number), provisional (=prov_desig), + key orbital fields.
+    Build compact JSON shards and upload:
+      - {prefix}/numbered-0001.json, numbered-0002.json, ...
+      - {prefix}/provisional-0001.json, ...
+      - {prefix}/index.json  (manifest)
     """
-    log("Building JSON snapshot ...")
+    if not all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET]):
+        log("R2 env not fully set; skipping R2 shard upload.")
+        return
+
+    log("Building JSON shards for R2 ...")
+    # Stream with server-side cursor to keep memory low
     sql = """
         SELECT
           object_id, name, mp_number, prov_desig,
@@ -434,19 +419,129 @@ def export_json_and_maybe_upload(conn) -> None:
           long_asc_node_deg, inclination_deg, eccentricity,
           mean_daily_motion_deg, semimajor_axis_au
         FROM mpc_objects_raw
-        ORDER BY object_id
+        ORDER BY COALESCE(mp_number, 2147483647), name
+    """
+    manifest = {
+        "version": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "categories": {
+            "numbered": [],
+            "provisional": [],
+        }
+    }
+
+    def cat_for(rec) -> str:
+        return "numbered" if rec["mp_number"] is not None else "provisional"
+
+    counts = {"numbered": 0, "provisional": 0}
+    shard_idx = {"numbered": 1, "provisional": 1}
+    shard_buf: dict[str, list] = {"numbered": [], "provisional": []}
+
+    def flush(category: str):
+        nonlocal shard_idx, shard_buf, manifest
+        if not shard_buf[category]:
+            return
+        seq = shard_idx[category]
+        key = f"{R2_PREFIX}{category}-{seq:04d}.json"
+        p = TMP_DIR / f"{category}-{seq:04d}.json"
+        p.write_text(json.dumps(shard_buf[category], separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+        r2_upload_file(p, key)
+        manifest["categories"][category].append({"key": key, "count": len(shard_buf[category])})
+        shard_buf[category].clear()
+        shard_idx[category] += 1
+        try:
+            p.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    with conn.cursor(name="mpc_cur") as cur:  # named cursor = server-side
+        cur.itersize = 10000
+        cur.execute(sql)
+        rows_yielded = 0
+        for row in cur:
+            rec = {
+                "object_id": row[0],
+                "name": row[1],
+                "mp_number": row[2],
+                "prov_desig": row[3],
+                "H": row[4],
+                "G": row[5],
+                "epoch_mjd": row[6],
+                "M": row[7],
+                "w": row[8],
+                "Omega": row[9],
+                "i": row[10],
+                "e": row[11],
+                "n": row[12],
+                "a": row[13],
+            }
+            # Map to app schema with your strict ID rule:
+            out = {
+                "id": rec["mp_number"] if rec["mp_number"] is not None else None,
+                "name": rec["name"],
+                "number": rec["mp_number"],
+                "provisional": rec["prov_desig"],
+                "H": rec["H"],
+                "G": rec["G"],
+                "epoch_mjd": rec["epoch_mjd"],
+                "M": rec["M"],
+                "w": rec["w"],
+                "Omega": rec["Omega"],
+                "i": rec["i"],
+                "e": rec["e"],
+                "n": rec["n"],
+                "a": rec["a"],
+            }
+
+            category = cat_for(rec)
+            shard_buf[category].append(out)
+            counts[category] += 1
+            rows_yielded += 1
+
+            if len(shard_buf[category]) >= R2_MAX_JSON_RECORDS:
+                flush(category)
+
+            if MAX_ROWS_INGEST and rows_yielded >= MAX_ROWS_INGEST:
+                break
+
+        # Flush any remaining buffers
+        flush("numbered")
+        flush("provisional")
+
+    # Write manifest
+    man_key = f"{R2_PREFIX}index.json"
+    man_path = TMP_DIR / "index.json"
+    man_path.write_text(json.dumps({
+        **manifest,
+        "totals": counts
+    }, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    r2_upload_file(man_path, man_key)
+    log(f"R2 shard upload complete. Manifest: {man_key}")
+
+def export_single_json_locally(conn) -> None:
+    """
+    (Optional) If you still want a single local JSON file for diagnostics.
+    """
+    log("Building single JSON snapshot (local only) ...")
+    sql = """
+        SELECT
+          object_id, name, mp_number, prov_desig,
+          h_mag, g_slope,
+          epoch_mjd, mean_anomaly_deg, arg_perihelion_deg,
+          long_asc_node_deg, inclination_deg, eccentricity,
+          mean_daily_motion_deg, semimajor_axis_au
+        FROM mpc_objects_raw
+        ORDER BY COALESCE(mp_number, 2147483647), name
     """
     with conn.cursor() as cur:
         cur.execute(sql)
         rows = cur.fetchall()
         cols = [d[0] for d in cur.description]
 
-    # Convert to your app schema
     out = []
     for r in rows:
         rec = dict(zip(cols, r))
         out.append({
-            "id": rec["object_id"],
+            "id": rec["mp_number"] if rec["mp_number"] is not None else None,
             "name": rec["name"],
             "number": rec["mp_number"],
             "provisional": rec["prov_desig"],
@@ -463,16 +558,7 @@ def export_json_and_maybe_upload(conn) -> None:
         })
 
     TMP_JSON_PATH.write_text(json.dumps(out, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    log(f"Wrote JSON → {TMP_JSON_PATH}")
-
-    if all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_JSON_KEY]):
-        try:
-            obj = r2_upload_json(TMP_JSON_PATH, R2_BUCKET, R2_JSON_KEY)
-            log(f"R2 upload complete: {obj}")
-        except Exception as e:
-            log(f"R2 upload failed: {e.__class__.__name__}: {e}")
-    else:
-        log("R2 env not fully set; skipping R2 upload.")
+    log(f"Wrote local JSON → {TMP_JSON_PATH}")
 
 # ---------------------- Main -------------------------------
 
@@ -483,7 +569,7 @@ def main() -> None:
     if MAX_ROWS_INGEST > 0:
         log(f"TEST MODE: will stop after {MAX_ROWS_INGEST} rows.")
 
-    log("Starting MPC data fetcher (robust ID/Name)...")
+    log("Starting MPC data fetcher (robust ID/Name + shard output)...")
 
     conn = get_db_connection()
     log("Connected to DB.")
@@ -501,14 +587,17 @@ def main() -> None:
 
             packed_desig, raw, h, g = extract_basic_fields(line)
             parsed = parse_readable_designation(packed_desig or "")
-            object_id  = parsed["object_id"]
+
+            object_id  = parsed["object_id"]       # may be None for provisional-only
             name       = parsed["name"]
-            mp_number  = int(parsed["mp_number"]) if parsed["mp_number"] else None
+            mp_number  = parsed["mp_number"] if parsed["mp_number"] is not None else None
             prov_desig = parsed["prov_desig"]
 
-            if not object_id or not name:
-                # skip malformed rows
-                continue
+            # We always store a stable key in DB; for provisional-only rows,
+            # use prov_desig as the key to keep rows distinct.
+            db_object_id = str(object_id) if object_id is not None else (prov_desig or name)
+            if not db_object_id or not name:
+                continue  # skip malformed
 
             elems = extract_orbital_elements(line)
 
@@ -517,7 +606,7 @@ def main() -> None:
                 break
 
             buffer.append((
-                object_id, mp_number, prov_desig, name, packed_desig,
+                db_object_id, mp_number, prov_desig, name, packed_desig,
                 raw, h, g,
                 elems["epoch_mjd"], elems["mean_anomaly_deg"], elems["arg_perihelion_deg"],
                 elems["long_asc_node_deg"], elems["inclination_deg"], elems["eccentricity"],
@@ -552,8 +641,11 @@ def main() -> None:
         else:
             export_to_gcs(conn, GCS_BUCKET_NAME, GCS_OBJECT_NAME)
 
-        # Always build local JSON; upload to R2 only if env is set
-        export_json_and_maybe_upload(conn)
+        # Always write shards to R2 if configured (compact + categorized)
+        export_json_shards_and_manifest(conn)
+
+        # Optional: keep a single local JSON for quick inspection
+        # export_single_json_locally(conn)
 
         conn.commit()
         log("All done.")
