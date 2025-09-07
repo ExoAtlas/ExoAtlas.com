@@ -57,6 +57,8 @@ SKIP_GCS_EXPORT = os.getenv("SKIP_GCS_EXPORT", "").lower() in {"1", "true", "yes
 
 REQUEST_TIMEOUT = (10, 120)  # (connect, read)
 
+TABLE_NAME = "asteroid_catalog"  # <-- new canonical table name
+
 # ---------------------- Logging ----------------------------
 
 def log(msg: str) -> None:
@@ -76,25 +78,29 @@ def get_db_connection():
         dbname=DB_NAME,
         sslmode="disable",     # proxy handles TLS
         connect_timeout=20,
-        application_name="mpc_data_fetcher",
+        application_name="asteroid_catalog_loader",
     )
     conn.autocommit = False
     return conn
 
 def table_exists(conn, table_name: str) -> bool:
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT 1
             FROM information_schema.tables
             WHERE table_schema='public' AND table_name=%s
             LIMIT 1
-        """, (table_name,))
+            """,
+            (table_name,),
+        )
         return cur.fetchone() is not None
 
 def ensure_schema(conn) -> None:
     """
-    Create compact schema:
-      mpc_objects (
+    Ensure compact schema:
+
+      asteroid_catalog (
         id INT PRIMARY KEY,
         name TEXT NOT NULL,
         raw_line TEXT NOT NULL,
@@ -104,34 +110,44 @@ def ensure_schema(conn) -> None:
         last_updated TIMESTAMPTZ DEFAULT NOW()
       )
 
-    If legacy mpc_objects_raw exists, migrate numbered rows once, then drop it.
+    If an older table named 'mpc_objects' exists, rename it to 'asteroid_catalog'.
+    If legacy 'mpc_objects_raw' exists, migrate numbered rows once, then drop it.
     """
     with conn.cursor() as cur:
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS mpc_objects (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                raw_line TEXT NOT NULL,
-                H REAL,
-                G REAL,
-                epoch_mjd INTEGER,
-                M REAL,
-                w REAL,
-                Omega REAL,
-                i REAL,
-                e REAL,
-                n REAL,
-                a REAL,
-                last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            );
-        """)
+        if not table_exists(conn, TABLE_NAME):
+            if table_exists(conn, "mpc_objects"):
+                log("Renaming existing table mpc_objects → asteroid_catalog ...")
+                cur.execute("ALTER TABLE mpc_objects RENAME TO asteroid_catalog;")
+            else:
+                log("Creating table asteroid_catalog ...")
+                cur.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+                        id INTEGER PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        raw_line TEXT NOT NULL,
+                        H REAL,
+                        G REAL,
+                        epoch_mjd INTEGER,
+                        M REAL,
+                        w REAL,
+                        Omega REAL,
+                        i REAL,
+                        e REAL,
+                        n REAL,
+                        a REAL,
+                        last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
+                    """
+                )
 
-        # Optional one-time migration from legacy table
+        # Optional one-time migration from very old raw table
         if table_exists(conn, "mpc_objects_raw"):
-            log("Legacy table mpc_objects_raw detected: migrating numbered rows → mpc_objects ...")
-            # Insert numbered rows (mp_number not null)
-            cur.execute("""
-                INSERT INTO mpc_objects (id, name, raw_line, H, G, epoch_mjd, M, w, Omega, i, e, n, a, last_updated)
+            log("Legacy table mpc_objects_raw detected: migrating numbered rows → asteroid_catalog ...")
+            cur.execute(
+                f"""
+                INSERT INTO {TABLE_NAME}
+                    (id, name, raw_line, H, G, epoch_mjd, M, w, Omega, i, e, n, a, last_updated)
                 SELECT
                     mp_number AS id,
                     COALESCE(NULLIF(name, ''), NULLIF(prov_desig, ''), NULLIF(packed_desig, '')) AS name,
@@ -144,7 +160,8 @@ def ensure_schema(conn) -> None:
                 FROM mpc_objects_raw
                 WHERE mp_number IS NOT NULL
                 ON CONFLICT (id) DO NOTHING;
-            """)
+                """
+            )
             log("Dropping legacy table mpc_objects_raw ...")
             cur.execute("DROP TABLE IF EXISTS mpc_objects_raw;")
 
@@ -165,7 +182,7 @@ def try_parse_int(s: str) -> t.Optional[int]:
         return None
 
 def extract_readable_designation(line: str) -> str | None:
-    """Readable designation is typically at 0-based [166:194]."""
+    """Readable designation is typically at 0-based [166:194] in MPCORB."""
     if not line or len(line) < 170:
         return None
     return (line[166:194].strip() or None)
@@ -238,8 +255,8 @@ def upsert_rows(conn, rows: list[tuple]) -> None:
     """
     if not rows:
         return
-    sql = """
-    INSERT INTO mpc_objects (
+    sql = f"""
+    INSERT INTO {TABLE_NAME} (
         id, name, raw_line, H, G, epoch_mjd, M, w, Omega, i, e, n, a, last_updated
     )
     VALUES (
@@ -267,13 +284,13 @@ def upsert_rows(conn, rows: list[tuple]) -> None:
 def export_to_gcs(conn, bucket_name: str, object_name: str) -> None:
     """Export numbered-only snapshot to GCS as CSV."""
     log(f"Exporting snapshot to gs://{bucket_name}/{object_name} ...")
-    sql = """
+    sql = f"""
         SELECT
           id,
           name,
           H, G,
           epoch_mjd, M, w, Omega, i, e, n, a
-        FROM mpc_objects
+        FROM {TABLE_NAME}
         ORDER BY id
     """
     chunks = pd.read_sql_query(sql, conn, chunksize=EXPORT_CHUNK_ROWS)
@@ -322,13 +339,13 @@ def export_json_shards_and_manifest(conn) -> None:
         return
 
     log("Building JSON shards for R2 (numbered only) ...")
-    sql = """
+    sql = f"""
         SELECT
           id,
           name,
           H, G,
           epoch_mjd, M, w, Omega, i, e, n, a
-        FROM mpc_objects
+        FROM {TABLE_NAME}
         ORDER BY id
     """
 
@@ -359,7 +376,7 @@ def export_json_shards_and_manifest(conn) -> None:
         except Exception:
             pass
 
-    with conn.cursor(name="mpc_numbered_cur") as cur:
+    with conn.cursor(name="asteroid_numbered_cur") as cur:
         cur.itersize = 10000
         cur.execute(sql)
         rows = 0
@@ -411,7 +428,7 @@ def main() -> None:
     if MAX_ROWS_INGEST > 0:
         log(f"TEST MODE: will stop after {MAX_ROWS_INGEST} rows.")
 
-    log("Starting MPC data fetcher (schema-compact, numbered-only)...")
+    log("Starting MPC data fetcher (schema-compact, numbered-only) ...")
 
     conn = get_db_connection()
     log("Connected to DB.")
