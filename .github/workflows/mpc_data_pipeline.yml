@@ -76,12 +76,20 @@ jobs:
           DB_PASSWORD:       ${{ secrets.DB_PASSWORD }}    
           DB_NAME:           ${{ secrets.DB_NAME }}         
           GCS_BUCKET_NAME:   ${{ secrets.GCS_BUCKET_NAME }}  
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_JSON_KEY: asteroids.json
+          # ---- Output Settings ----
+          OUT_CSV_NAME: asteroids.csv
+          OUT_JSON_NAME: asteroids.json 
       
           # Already set earlier by auth@v2; left here for clarity:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_GHA_CREDS_PATH }}
           
           # Test-mode knobs:
-          MAX_ROWS_INGEST:   "0"
+          MAX_ROWS_INGEST:   "1000"
           SKIP_GCS_EXPORT:   "0"
           # (optional) make batches smaller for a snappier test:
           UPSERT_BATCH_SIZE: "500"
