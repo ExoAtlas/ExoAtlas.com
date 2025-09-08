@@ -1,4 +1,4 @@
-name: Daily Minor Planet Center (MPC) Data Pipeline
+name: Weekly Asteroid Data Pipeline (Minor Planet Center)
 
 on:
   schedule:
