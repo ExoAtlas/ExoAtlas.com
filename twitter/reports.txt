@@ -41,3 +41,4 @@ Sep 04, 14:24:10 UTC, tweet posted successfully | On this day in 1993, the Hubbl
 Sep 05, 14:23:16 UTC, tweet posted successfully | In 1977, NASA launched the Voyager 1 space probe on its "Grand Tour" of the outer planets. It is now the most distant human-made object in space. 🚀 #Voyager1
 Sep 06, 14:20:03 UTC, tweet posted successfully | Happy birthday to John Dalton (born 1766), the English chemist whose atomic theory revolutionized our understanding of matter. #ScienceHistory
 Sep 07, 14:20:07 UTC, tweet posted successfully | On this day in 1995, the Galileo spacecraft's atmospheric probe was released on its course to plunge into Jupiter's dense atmosphere. #Galileo #Jupiter
+Sep 08, 14:26:40 UTC, tweet posted successfully | In 1966, the television series Star Trek premiered. Its hopeful vision of humanity's future in space continues to inspire scientists and explorers. 🖖 #StarTrek
