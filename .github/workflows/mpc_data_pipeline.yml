@@ -1,4 +1,4 @@
-name: Asteroid Data Pipeline - Weekly (Minor Planet Center)
+name: Asteroid Data Update - Weekly (Minor Planet Center)
 
 on:
   schedule:
