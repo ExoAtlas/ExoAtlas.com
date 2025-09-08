@@ -252,8 +252,10 @@ def get_db_conn():
     )
 
 def ensure_table(conn) -> None:
-    with conn, conn.cursor() as cur:
+    # Avoid re-entering the same connection as a context manager.
+    with conn.cursor() as cur:
         cur.execute(DDL)
+    conn.commit()
     log('Ensured table "asteroid_catalog".')
 
 # ---------------------------- Export: GCS CSV ----------------------------
@@ -265,7 +267,7 @@ def export_csv_to_gcs(conn) -> None:
         log("Skipping GCS CSV export per SKIP_GCS_EXPORT=1")
         return
     if not GCS_BUCKET_NAME:
-        log("GCS_BUCKET_NAME not set; skipping CSV export.")
+        log("GCS_BUCKETNAME not set; skipping CSV export.")
         return
 
     log("Exporting CSV to GCS...")
@@ -456,9 +458,9 @@ def ingest(conn) -> None:
         batch.append(values)
 
         if len(batch) >= UPSERT_BATCH_SIZE:
-            with conn:
-                with conn.cursor() as cur:
-                    execute_values(cur, UPSERT_SQL, batch, page_size=UPSERT_BATCH_SIZE)
+            with conn.cursor() as cur:
+                execute_values(cur, UPSERT_SQL, batch, page_size=UPSERT_BATCH_SIZE)
+            conn.commit()
             inserted += len(batch)
             log(f"Upserted {inserted} rows...")
             batch.clear()
@@ -468,9 +470,9 @@ def ingest(conn) -> None:
 
     # final batch
     if batch:
-        with conn:
-            with conn.cursor() as cur:
-                execute_values(cur, UPSERT_SQL, batch, page_size=UPSERT_BATCH_SIZE)
+        with conn.cursor() as cur:
+            execute_values(cur, UPSERT_SQL, batch, page_size=UPSERT_BATCH_SIZE)
+        conn.commit()
         inserted += len(batch)
         batch.clear()
 
