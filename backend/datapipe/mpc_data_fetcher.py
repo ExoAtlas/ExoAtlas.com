@@ -206,13 +206,17 @@ CREATE TABLE IF NOT EXISTS asteroid_catalog (
 UPSERT_SQL = """
 INSERT INTO asteroid_catalog
 (id, name, H, G, epoch_mjd, M, w, Omega, i, e, n, a)
-VALUES %s
+SELECT DISTINCT ON (v.id)
+    v.id, v.name, v.H, v.G, v.epoch_mjd, v.M, v.w, v.Omega, v.i, v.e, v.n, v.a
+FROM (VALUES %s) AS v
+    (id, name, H, G, epoch_mjd, M, w, Omega, i, e, n, a)
+ORDER BY v.id
 ON CONFLICT (id) DO UPDATE SET
     name=EXCLUDED.name,
     H=EXCLUDED.H, G=EXCLUDED.G, epoch_mjd=EXCLUDED.epoch_mjd,
     M=EXCLUDED.M, w=EXCLUDED.w, Omega=EXCLUDED.Omega,
     i=EXCLUDED.i, e=EXCLUDED.e, n=EXCLUDED.n, a=EXCLUDED.a,
-    updated_at=NOW();
+    updated_at = NOW();
 """
 
 def get_db_conn():
