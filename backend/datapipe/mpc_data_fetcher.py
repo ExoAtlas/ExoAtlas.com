@@ -1,45 +1,44 @@
-"""
-ExoAtlas asteroid catalog fetcher & publisher
+# ExoAtlas asteroid catalog fetcher & publisher
+#
+# - Downloads MPCORB.DAT.gz from Minor Planet Center
+# - Parses ONLY numbered objects (skips provisional-only designations)
+# - Stores compact orbital elements in Postgres table "asteroid_catalog"
+# - Exports a CSV to GCS
+# - Builds JSON shards for R2 grouped by orbital regime (semi-major axis and perihelion)
+#   with small, web-friendly file sizes.
+#
+# Fields kept (DB/CSV/JSON):
+#     id (int)          -- MPC number
+#     name (str)        -- common name without the leading "(####) "
+#     H, G (float)
+#     epoch_mjd (float) -- epoch of elements in Modified Julian Date (JD - 2400000.5)
+#     M, w, Omega, i, e, n, a (float)  [degrees for angles, a in AU, n in deg/day]
+#
+# Environment variables:
+#     DB_HOST (default: 127.0.0.1)
+#     DB_PORT (default: 5432)
+#     DB_USER
+#     DB_PASSWORD
+#     DB_NAME
+#
+#     GCS_BUCKET_NAME             -- e.g. "exoatlas-prod"
+#     SKIP_GCS_EXPORT             -- "1" to skip CSV upload, default "0"
+#     GCS_CSV_OBJECT_NAME         -- default: "asteroids/asteroid_catalog.csv"
+#
+#     R2_ENDPOINT                 -- e.g. "https://<accountid>.r2.cloudflarestorage.com"
+#     R2_BUCKET                   -- bucket name
+#     R2_ACCESS_KEY_ID
+#     R2_SECRET_ACCESS_KEY
+#     R2_SHARD_SIZE               -- approx objects per JSON file (default: 25000)
+#     R2_BASE_PREFIX              -- default: "asteroids/by_regime"
+#
+#     MPCORB_URL                  -- override MPC file URL (default stable)
+#     MAX_ROWS_INGEST             -- 0 (all) or limit for testing
+#     UPSERT_BATCH_SIZE           -- default: 1000
 
-- Downloads MPCORB.DAT.gz from Minor Planet Center
-- Parses ONLY numbered objects (skips provisional-only designations)
-- Stores compact orbital elements in Postgres table "asteroid_catalog"
-- Exports a CSV to GCS
-- Builds JSON shards for R2 grouped by orbital regime (semi-major axis and perihelion)
-  with small, web-friendly file sizes.
-
-Fields kept (DB/CSV/JSON):
-    id (int)          -- MPC number
-    name (str)        -- common name without the leading "(####) "
-    H, G (float)
-    epoch_mjd (float) -- epoch of elements in Modified Julian Date (JD - 2400000.5)
-    M, w, Omega, i, e, n, a (float)  [degrees for angles, a in AU, n in deg/day]
-
-Environment variables:
-    DB_HOST (default: 127.0.0.1)
-    DB_PORT (default: 5432)
-    DB_USER
-    DB_PASSWORD
-    DB_NAME
-
-    GCS_BUCKET_NAME             -- e.g. "exoatlas-prod"
-    SKIP_GCS_EXPORT             -- "1" to skip CSV upload, default "0"
-    GCS_CSV_OBJECT_NAME         -- default: "asteroids/asteroid_catalog.csv"
-
-    R2_ENDPOINT                 -- e.g. "https://<accountid>.r2.cloudflarestorage.com"
-    R2_BUCKET                   -- bucket name
-    R2_ACCESS_KEY_ID
-    R2_SECRET_ACCESS_KEY
-    R2_SHARD_SIZE               -- approx objects per JSON file (default: 25000)
-    R2_BASE_PREFIX              -- default: "asteroids/by_regime"
-
-    MPCORB_URL                  -- override MPC file URL (default stable)
-    MAX_ROWS_INGEST             -- 0 (all) or limit for testing
-    UPSERT_BATCH_SIZE           -- default: 1000
-"""
 from __future__ import annotations
 
-import os, sys, io, gzip, json, math, time, datetime as dt
+import os, sys, io, gzip, json, math, datetime as dt
 from typing import Iterator, Tuple, Optional, Dict, Any, List
 import requests
 import psycopg2
@@ -90,26 +89,14 @@ def try_float(s: str) -> Optional[float]:
 
 def jd_from_ymd(year: int, month: int, day: int) -> float:
     """Julian Date at 0h UT for Gregorian calendar date."""
-    # Fliegel–Van Flandern
     a = (14 - month)//12
     y = year + 4800 - a
     m = month + 12*a - 3
-    # Gregorian calendar correction
     jd = day + ((153*m + 2)//5) + 365*y + y//4 - y//100 + y//400 - 32045
-    # 0h UT => fractional part .5 subtracted later for MJD
-    return float(jd) - 0.5  # JD starts at noon; 0h UTC is JD-0.5
+    return float(jd) - 0.5  # 0h UTC is JD-0.5
 
 def mjd_from_packed_epoch(packed: str) -> Optional[float]:
-    """Decode MPC 5-char packed epoch (e.g., 'K134I') to MJD.
-
-    Format (5 chars):
-      c0  : century code  ('I'->1800s, 'J'->1900s, 'K'->2000s, 'L'->2100s)
-      c1c2: two digits for year within century ('00'..'99')
-      c3  : month         ('1'..'9','A'..'C' => 10..12)
-      c4  : day           ('1'..'9','A'..'V' => 10..31)
-
-    Returns MJD = JD - 2400000.5 or None on failure.
-    """
+    """Decode MPC 5-char packed epoch (e.g., 'K134I') to MJD."""
     s = (packed or "").strip().upper()
     if len(s) != 5:
         return None
@@ -122,8 +109,7 @@ def mjd_from_packed_epoch(packed: str) -> Optional[float]:
         def dec(ch: str) -> int:
             if ch.isdigit():
                 return int(ch)
-            v = ord(ch) - ord("A") + 10
-            return v
+            return ord(ch) - ord("A") + 10
         month = dec(c3)
         day = dec(c4)
         if not (1 <= month <= 12 and 1 <= day <= 31):
@@ -139,55 +125,43 @@ def mjd_from_packed_epoch(packed: str) -> Optional[float]:
 def parse_id_and_name(line: str) -> Tuple[Optional[int], Optional[str]]:
     """
     Extract the numbered ID and clean name from the MPCORB fixed-width 'name' field.
-    Field approx columns 166-194 (28 chars). Examples:
+    Examples:
         "(1) Ceres"         -> id=1,   name="Ceres"
         "(3200) Phaethon"   -> id=3200,name="Phaethon"
         "433 Eros"          -> id=433, name="Eros"
         "2014 OD436"        -> id=None,name="2014 OD436"   (provisional; skipped later)
-
-    Returns (id, name). If id is None, the object is provisional-only.
     """
     tail = line[166:194].strip()
     if not tail:
         return None, None
     if tail.startswith("("):
-        # e.g., "(100000) Astronautica"
         try:
             close = tail.find(")")
             num = int(tail[1:close])
-            # skip space after ')'
             nm = tail[close+1:].lstrip()
             return num, nm if nm else None
         except Exception:
             pass
-    # fallback: e.g., "433 Eros"
     parts = tail.split()
     if parts and parts[0].isdigit():
         num = int(parts[0])
         nm = " ".join(parts[1:]) if len(parts) > 1 else None
         return num, nm
-    # Provisional-only or unknown
     return None, tail or None
 
 def extract_orbital_elements(line: str) -> Dict[str, Optional[float]]:
-    """
-    Slice fields per MPCORB layout (len ~ 180+). Tolerant to blanks.
-    Angles in degrees; a in AU; n in deg/day; H,G as provided.
-    Epoch is MPC 5-char packed date -> decoded to MJD.
-    """
+    """Slice fields per MPCORB layout (len ~180+). Tolerant to blanks."""
     H   = try_float(line[8:13])
     G   = try_float(line[14:19])
     epk = line[20:25].strip()
     M   = try_float(line[26:35])
-    w   = try_float(line[37:46])     # arg(Peri)
-    Om  = try_float(line[49:58])     # long. node
+    w   = try_float(line[37:46])
+    Om  = try_float(line[49:58])
     inc = try_float(line[60:68])
     ecc = try_float(line[70:79])
     n   = try_float(line[80:91])
     a   = try_float(line[92:103])
-
     epoch_mjd = mjd_from_packed_epoch(epk)
-
     return {
         "H": H, "G": G, "epoch_mjd": epoch_mjd,
         "M": M, "w": w, "Omega": Om, "i": inc,
@@ -195,7 +169,6 @@ def extract_orbital_elements(line: str) -> Dict[str, Optional[float]]:
     }
 
 def is_data_line(line: str) -> bool:
-    # Data lines are long; headers/notes start with non-data chars or are short
     return line and len(line) > 120 and (line[0].isalnum() or line[0] == " ")
 
 def stream_mpc_lines(url: str) -> Iterator[str]:
@@ -252,7 +225,7 @@ def get_db_conn():
     )
 
 def ensure_table(conn) -> None:
-    # Avoid re-entering the same connection as a context manager.
+    # Use only the cursor as a context manager (avoid re-entering the connection).
     with conn.cursor() as cur:
         cur.execute(DDL)
     conn.commit()
@@ -271,23 +244,19 @@ def export_csv_to_gcs(conn) -> None:
         return
 
     log("Exporting CSV to GCS...")
-    # Stream rows with server-side cursor to avoid memory blow-up
     with conn.cursor(name="csv_stream") as cur:
         cur.itersize = 50000
         cur.execute("SELECT id,name,H,G,epoch_mjd,M,w,Omega,i,e,n,a FROM asteroid_catalog ORDER BY id;")
 
-        # Build CSV in-memory in chunks (rows are compact; fine for streaming to upload)
         buf = io.StringIO()
         buf.write(",".join(CSV_HEADERS) + "\n")
         count = 0
         for row in cur:
-            # row types already numeric/str
             vals = []
             for v in row:
                 if v is None:
                     vals.append("")
                 elif isinstance(v, str):
-                    # basic CSV escaping for commas/quotes
                     vv = v.replace('"', '""')
                     if "," in vv or '"' in vv:
                         vv = f'"{vv}"'
@@ -296,10 +265,8 @@ def export_csv_to_gcs(conn) -> None:
                     vals.append(str(v))
             buf.write(",".join(vals) + "\n")
             count += 1
-            # Periodic flush to avoid huge buffer
             if count % 200000 == 0:
                 _flush_csv_buf_to_gcs(buf, count)
-        # Final flush
         _upload_csv_to_gcs(buf.getvalue())
         log(f"GCS CSV export complete, rows={count} -> gs://{GCS_BUCKET_NAME}/{GCS_CSV_OBJECT_NAME}")
 
@@ -319,32 +286,20 @@ def _upload_csv_to_gcs(data: str) -> None:
 # ---------------------------- Export: R2 JSON shards by orbital regime ----------------------------
 
 def classify_regime(a: Optional[float], e: Optional[float]) -> str:
-    """
-    Simple physically-meaningful bins. Uses a (and perihelion q=a(1-e) when available).
-    Bins chosen to keep web shards small and match common asteroid dynamical classes.
-    """
+    """Simple bins using a and perihelion q=a(1-e)."""
     if a is None:
         return "unknown"
-
     q = a*(1 - (e or 0.0))
-
-    # Near-Earth Objects by perihelion
     if q is not None and q <= 1.3:
         return "neo"
-
-    # Inner-asteroid/hungaria-ish
     if a < 2.0:
         return "inner-asteroids"
-
-    # Main-belt slices
     if 2.0 <= a < 2.5:
         return "main-inner"
     if 2.5 <= a < 2.82:
         return "main-middle"
     if 2.82 <= a < 3.3:
         return "main-outer"
-
-    # Beyond MB
     if 3.3 <= a < 3.7:
         return "cybele"
     if 3.7 <= a < 4.2:
@@ -372,12 +327,10 @@ def build_r2_shards(conn) -> None:
         region_name="us-east-1",
     )
 
-    # per-regime state
     buffers: Dict[str, List[Dict[str, Any]]] = {}
-    counters: Dict[str, int] = {}  # shard index starting at 1
+    counters: Dict[str, int] = {}
 
     def flush(regime: str) -> None:
-        """Upload one shard for a regime if buffer reached shard size, or final flush when called explicitly with buffer smaller than shard size."""
         arr = buffers.get(regime, [])
         if not arr:
             return
@@ -395,7 +348,6 @@ def build_r2_shards(conn) -> None:
         buffers[regime] = []
         log(f"  Uploaded {regime} shard #{idx:04d} with {len(arr)} objects -> r2://{R2_BUCKET}/{key}")
 
-    # Stream rows from DB
     with conn.cursor(name="r2_stream") as cur:
         cur.itersize = 50000
         cur.execute("SELECT id,name,H,G,epoch_mjd,M,w,Omega,i,e,n,a FROM asteroid_catalog ORDER BY id;")
@@ -415,11 +367,9 @@ def build_r2_shards(conn) -> None:
                 flush(regime)
             total += 1
 
-    # Final flush for all regimes
     for regime in list(buffers.keys()):
         flush(regime)
 
-    # Write a tiny manifest to help the frontend discover shards (optional)
     manifest = {reg: {"count": counters.get(reg, 0), "shard_size": R2_SHARD_SIZE}
                 for reg in sorted(counters.keys())}
     man_key = f"{R2_BASE_PREFIX}/manifest.json"
@@ -434,6 +384,24 @@ def build_r2_shards(conn) -> None:
 
 # ---------------------------- Ingest pipeline ----------------------------
 
+def _flush_batch(conn, batch: List[Tuple]) -> int:
+    """Deduplicate a batch by id (last value wins) and upsert."""
+    if not batch:
+        return 0
+    # Deduplicate within this single INSERT statement; prevents
+    # 'ON CONFLICT ... cannot affect row a second time'.
+    dedup: Dict[int, Tuple] = {}
+    for row in batch:
+        dedup[row[0]] = row  # row[0] is id
+    values = list(dedup.values())
+    dropped = len(batch) - len(values)
+    if dropped:
+        log(f"  (dedup) collapsed {dropped} duplicate id(s) in current batch")
+    with conn.cursor() as cur:
+        execute_values(cur, UPSERT_SQL, values, page_size=UPSERT_BATCH_SIZE)
+    conn.commit()
+    return len(values)
+
 def ingest(conn) -> None:
     ensure_table(conn)
 
@@ -444,36 +412,27 @@ def ingest(conn) -> None:
             continue
 
         obj_id, obj_name = parse_id_and_name(line)
-        # Only keep numbered objects
         if obj_id is None or not obj_name:
             continue
 
         els = extract_orbital_elements(line)
-        values = (
+        batch.append((
             obj_id, obj_name,
             els["H"], els["G"], els["epoch_mjd"],
             els["M"], els["w"], els["Omega"], els["i"],
             els["e"], els["n"], els["a"],
-        )
-        batch.append(values)
+        ))
 
         if len(batch) >= UPSERT_BATCH_SIZE:
-            with conn.cursor() as cur:
-                execute_values(cur, UPSERT_SQL, batch, page_size=UPSERT_BATCH_SIZE)
-            conn.commit()
-            inserted += len(batch)
+            inserted += _flush_batch(conn, batch)
             log(f"Upserted {inserted} rows...")
             batch.clear()
 
-        if MAX_ROWS_INGEST and (inserted + len(batch)) >= MAX_ROWS_INGEST:
+        if MAX_ROWS_INGEST and inserted >= MAX_ROWS_INGEST:
             break
 
-    # final batch
     if batch:
-        with conn.cursor() as cur:
-            execute_values(cur, UPSERT_SQL, batch, page_size=UPSERT_BATCH_SIZE)
-        conn.commit()
-        inserted += len(batch)
+        inserted += _flush_batch(conn, batch)
         batch.clear()
 
     log(f"Ingest complete. Total upserted: {inserted}")
