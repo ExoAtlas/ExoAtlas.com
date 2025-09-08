@@ -1,4 +1,4 @@
-name: Space-Track Daily Ingest
+name: Satellite Data Update - Daily (Space-Track.org)
 
 on:
   schedule:
