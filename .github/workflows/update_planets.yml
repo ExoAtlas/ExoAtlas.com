@@ -1,4 +1,4 @@
-name: Daily Planet Data Update (GCS/Cloud SQL/CloudFlare R2)
+name: Planet Data Update - Daily (NASA Horizons)
 
 on:
   schedule:
