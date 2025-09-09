@@ -42,3 +42,4 @@ Sep 05, 14:23:16 UTC, tweet posted successfully | In 1977, NASA launched the Voy
 Sep 06, 14:20:03 UTC, tweet posted successfully | Happy birthday to John Dalton (born 1766), the English chemist whose atomic theory revolutionized our understanding of matter. #ScienceHistory
 Sep 07, 14:20:07 UTC, tweet posted successfully | On this day in 1995, the Galileo spacecraft's atmospheric probe was released on its course to plunge into Jupiter's dense atmosphere. #Galileo #Jupiter
 Sep 08, 14:26:40 UTC, tweet posted successfully | In 1966, the television series Star Trek premiered. Its hopeful vision of humanity's future in space continues to inspire scientists and explorers. 🖖 #StarTrek
+Sep 09, 14:24:02 UTC, tweet posted successfully | On this day in 1975, the Viking 2 spacecraft was launched, following its twin, Viking 1, on a mission to orbit and land on Mars. #Viking2
