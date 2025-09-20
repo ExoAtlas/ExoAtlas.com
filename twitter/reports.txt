@@ -53,3 +53,4 @@ Sep 16, 14:26:06 UTC, tweet posted successfully | In 1987, the Montreal Protocol
 Sep 17, 14:24:13 UTC, tweet posted successfully | On this day in 1789, William Herschel discovered Mimas, a moon of Saturn known for its massive Herschel Crater, which gives it a resemblance to the Death Star. #Mimas #Saturn
 Sep 18, 14:25:05 UTC, tweet posted successfully | In 1977, the Voyager 1 spacecraft took the first-ever photograph showing the Earth and Moon together in a single frame, a beautiful portrait from 7.25 million miles away. #Voyager1
 Sep 19, 14:23:58 UTC, tweet posted successfully | Happy birthday to astronaut Sunita Williams (born 1965), a veteran of two long-duration stays on the International Space Station. 👩‍🚀 #Astronaut
+Sep 20, 14:20:45 UTC, tweet posted successfully | On this day in 1970, the Soviet Luna 16 probe returned to Earth, successfully delivering the first lunar soil sample collected entirely by a robotic spacecraft. #Luna16
