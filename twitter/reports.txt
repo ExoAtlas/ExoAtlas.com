@@ -58,3 +58,4 @@ Sep 21, 14:20:28 UTC, tweet posted successfully | In 2003, the Galileo spacecraf
 Sep 22, 14:26:44 UTC, tweet posted successfully | Today is the September Equinox! Day and night are of nearly equal length as the Sun shines directly on the equator, marking the start of autumn in the Northern Hemisphere. 🍂 #Equinox
 Sep 23, 14:25:54 UTC, tweet posted successfully | On this day in 1846, the planet Neptune was discovered by Johann Galle, using calculations from Urbain Le Verrier that predicted its location. A triumph of celestial mechanics. #Neptune
 Sep 24, 14:23:56 UTC, tweet posted successfully | In 1999, the Mars Climate Orbiter was lost upon arrival at Mars due to a metric-to-imperial unit conversion error, a costly but valuable lesson in engineering. #NASA
+Sep 25, 14:26:18 UTC, tweet posted successfully | Happy birthday to Ole Rømer (born 1644), the Danish astronomer who made the first quantitative measurements of the speed of light. #Physics
