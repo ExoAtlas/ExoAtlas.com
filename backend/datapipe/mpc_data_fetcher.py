@@ -88,11 +88,11 @@ R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.getenv("R2_BUCKET")
 R2_PREFIX = os.getenv("R2_PREFIX", "asteroids/")
-R2_MAX_JSON_RECORDS = int(os.getenv("R2_MAX_JSON_RECORDS", "50000"))
+R2_MAX_JSON_RECORDS = int(os.getenv("R2_MAX_JSON_RECORDS", "20000"))
 
 # Ingestion/export tuning
 UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "1000"))
-EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "50000"))
+EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "20000"))
 
 # Limit rows in test runs (0 = unlimited)
 MAX_ROWS_INGEST = int(os.getenv("MAX_ROWS_INGEST", "0"))
