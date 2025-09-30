@@ -63,3 +63,4 @@ Sep 26, 14:23:53 UTC, tweet posted successfully | Today in 1905, Albert Einstein
 Sep 27, 14:20:20 UTC, tweet posted successfully | In 2007, NASA's Dawn spacecraft was launched on a unique mission to orbit two different bodies in the main asteroid belt: Vesta and Ceres. #DawnMission
 Sep 28, 14:19:24 UTC, tweet posted successfully | On this day in 2008, SpaceX successfully launched the Falcon 1, becoming the first privately developed liquid-fueled rocket to reach orbit. A pivotal moment for the company. 🚀 #SpaceX
 Sep 29, 14:26:20 UTC, tweet posted successfully | In 1977, the Soviet Union launched the Salyut 6 space station, the first to feature two docking ports, allowing for crew handovers and cargo resupply. #Salyut6
+Sep 30, 14:25:01 UTC, tweet posted successfully | On this day in 2016, the European Space Agency's Rosetta mission ended with a controlled impact onto the surface of Comet 67P, the comet it had studied for over two years. ☄️ #Rosetta
