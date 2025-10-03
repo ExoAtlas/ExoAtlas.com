@@ -66,3 +66,4 @@ Sep 29, 14:26:20 UTC, tweet posted successfully | In 1977, the Soviet Union laun
 Sep 30, 14:25:01 UTC, tweet posted successfully | On this day in 2016, the European Space Agency's Rosetta mission ended with a controlled impact onto the surface of Comet 67P, the comet it had studied for over two years. ☄️ #Rosetta
 Oct 01, 14:26:23 UTC, tweet posted successfully | On this day in 1958, NASA was officially created and began operations, succeeding the National Advisory Committee for Aeronautics (NACA). Happy birthday, NASA! 🎂 #NASA
 Oct 02, 14:25:26 UTC, tweet posted successfully | Happy birthday to astronaut and commander of Apollo 12, Charles "Pete" Conrad (born 1930), the third person to walk on the Moon. #Apollo12
+Oct 03, 14:23:57 UTC, tweet posted successfully | In 1942, a German V-2 rocket became the first human-made object to reach space, crossing the Kármán line at an altitude of 100 km. #V2Rocket #SpaceHistory
