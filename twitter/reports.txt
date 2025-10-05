@@ -68,3 +68,4 @@ Oct 01, 14:26:23 UTC, tweet posted successfully | On this day in 1958, NASA was 
 Oct 02, 14:25:26 UTC, tweet posted successfully | Happy birthday to astronaut and commander of Apollo 12, Charles "Pete" Conrad (born 1930), the third person to walk on the Moon. #Apollo12
 Oct 03, 14:23:57 UTC, tweet posted successfully | In 1942, a German V-2 rocket became the first human-made object to reach space, crossing the Kármán line at an altitude of 100 km. #V2Rocket #SpaceHistory
 Oct 04, 14:19:59 UTC, tweet posted successfully | On this day in 1957, the Soviet Union launched Sputnik 1, the world's first artificial satellite. The event kicked off the Space Race and the start of World Space Week. 🛰️ #Sputnik #WorldSpaceWeek
+Oct 05, 14:20:25 UTC, tweet posted successfully | Happy birthday to Robert H. Goddard (born 1882), the father of modern rocketry, whose work was fundamental to the space age. 🚀 #RobertGoddard
