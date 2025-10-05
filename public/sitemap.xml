@@ -34,10 +34,7 @@
     <loc>https://www.exoatlas.com/contact</loc>
     <changefreq>yearly</changefreq>
     <priority>0.75</priority>
-    <lastmod>2025-05-17</lastmod>
-    <image:image>
-    <image:loc>https://images.squarespace-cdn.com/content/v1/65d4352f906b017857d7b957/1723438418340-98ISS2CWWC3WSRKRBMQ7/unsplash-image-V4ZksNimxLk.jpg</image:loc>
-    </image:image>
+    <lastmod>2025-10-05</lastmod>
   </url>
   <url>
     <loc>https://www.exoatlas.com/data</loc>
@@ -64,3 +61,4 @@
     <lastmod>2025-09-21</lastmod>
   </url>
 </urlset>
+
