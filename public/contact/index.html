@@ -99,17 +99,17 @@ gtag('config', 'G-LV8V28JZ0L');
 
   <form id="contactForm">
   <h2>Contact Us</h2>
-  <input name="name" required placeholder="Your name">
-  <input type="email" name="email" required placeholder="Email">
-  <input type="tel" name="phone" required placeholder="Phone">
   <select name="category" required>
-    <option value="" disabled selected>Select a Reason</option>
+    <option value="" disabled selected>Select a Reason (Required)</option>
     <option>Contact Us</option>
     <option>Bug</option>
     <option>Request Feature</option>
     <option>Data Issue</option>
   </select>
-  <textarea name="message" required placeholder="Message"></textarea>
+  <input name="name" required placeholder="Your name (Required)">
+  <input type="email" name="email" required placeholder="Email (Required)">
+  <input type="tel" name="phone" placeholder="Phone (Optional)">
+  <textarea name="message" required placeholder="Message (Required)"></textarea>
   <input type="hidden" name="page" value="" id="pageField">
   <div class="cf-turnstile" data-sitekey="0x4AAAAAAB43P0Coc4k_VsVs"></div>
   <button type="submit">Send</button>
