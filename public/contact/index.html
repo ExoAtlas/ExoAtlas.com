@@ -3,17 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>About — ExoAtlas</title>
+  <title>Contact Us — ExoAtlas</title>
 
   <!-- SEO -->
-  <meta name="description" content="Discover the mission and vision behind ExoAtlas. Learn about our passion for exoplanetary exploration and the team dedicated to bringing the cosmos to your fingertips.">
-  <meta name="keywords" content="About ExoAtlas, space exploration, space discovery, astronomy, astrophysics, our mission, space mapping">
-  <link rel="canonical" href="https://www.exoatlas.com/about">
+  <meta name="description" content="Contact ExoAtlas. Questions, data requests, or feedback? We typically reply within 1–2 business days.">
+  <meta name="keywords" content="ExoAtlas, space exploration, space discovery, astronomy, astrophysics, our mission, space mapping, object tracking, satellites, planets, comets, asteroids">
+  <link rel="canonical" href="https://www.exoatlas.com/contact">
   <meta name="robots" content="index, follow">
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700" rel="stylesheet">
+  <meta property="og:title" content="Contact — ExoAtlas">
+  <meta property="og:description" content="Questions, data requests, or feedback? We’ll reply within 1–2 business days.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.exoatlas.com/contact">
+  <meta property="og:image" content="https://www.exoatlas.com/public/assets/img/antenna/antenna-crop-1080.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/public/assets/css/style.css" />
   <link rel="stylesheet" href="contact.css" />
   <script defer src="/assets/js/main.js"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -97,68 +106,190 @@ gtag('config', 'G-LV8V28JZ0L');
     <a href="/live" class="mobile-nav-cta-item">Live Solar System</a>
 </div>
 
-  <form id="contactForm">
-  <h2>Contact Us</h2>
-  <select name="category" required>
-    <option value="" disabled selected>Select a Reason</option>
-    <option>Contact Us</option>
-    <option>Bug</option>
-    <option>Request Feature</option>
-    <option>Data Issue</option>
-  </select>
-  <input name="name" required placeholder="Your name (Required)">
-  <input type="email" name="email" required placeholder="Email (Required)">
-  <input type="tel" name="phone" placeholder="Phone (Optional)">
-  <textarea name="message" required placeholder="Message (Required)"></textarea>
-  <input type="hidden" name="page" value="" id="pageField">
-  <div class="cf-turnstile" data-sitekey="0x4AAAAAAB43P0Coc4k_VsVs"></div>
-  <button type="submit">Send</button>
-  <div id="msg"></div>
-</form>
 
+<main class="page">
+
+<!-- Preload top candidate (the browser may still choose another via srcset) -->
+<link rel="preload"
+      as="image"
+      imagesrcset="/public/assets/img/antenna/antenna-crop-1080.avif 1080w,
+            /public/assets/img/antenna/antenna-crop-1440.avif 1440w,
+            /public/assets/img/antenna/antenna-crop-1920.avif 1920w"
+      imagesizes="100vw">
+
+<section class="hero">
+<picture class="hero-media">
+  <source type="image/avif"
+    srcset="/public/assets/img/antenna/antenna-crop-480.avif 480w,
+            /public/assets/img/antenna/antenna-crop-768.avif 768w,
+            /public/assets/img/antenna/antenna-crop-1080.avif 1080w,
+            /public/assets/img/antenna/antenna-crop-1440.avif 1440w,
+            /public/assets/img/antenna/antenna-crop-1920.avif 1920w,
+            /public/assets/img/antenna/antenna-crop-2560.avif 2560w"
+    sizes="100vw">
+  <source type="image/webp"
+    srcset="/public/assets/img/antenna/antenna-crop-480.webp 480w,
+            /public/assets/img/antenna/antenna-crop-768.webp 768w,
+            /public/assets/img/antenna/antenna-crop-1080.webp 1080w,
+            /public/assets/img/antenna/antenna-crop-1440.webp 1440w,
+            /public/assets/img/antenna/antenna-crop-1920.webp 1920w,
+            /public/assets/img/antenna/antenna-crop-2560.webp 2560w"
+    sizes="100vw">
+  <img src="/public/assets/img/antenna/antenna-crop-1080.jpg"
+       srcset="/public/assets/img/antenna/antenna-crop-480.jpg 480w,
+               /public/assets/img/antenna/antenna-crop-768.jpg 768w,
+               /public/assets/img/antenna/antenna-crop-1080.jpg 1080w,
+               /public/assets/img/antenna/antenna-crop-1440.jpg 1440w,
+               /public/assets/img/antenna/antenna-crop-1920.jpg 1920w,
+               /public/assets/img/antenna/antenna-crop-2560.jpg 2560w"
+       sizes="100vw" alt="" width="2048" height="1152"
+       decoding="async" fetchpriority="high">
+</picture>
+
+  <div class="hero-inner">
+    <h1>Contact Us</h1>
+    <p>Questions about ExoAtlas or data requests?</p>
+  </div>
+
+
+  <div class="hero-credit" role="note">
+    <span>Image Credit: <a href="https://images.nasa.gov/details/PIA24163" target="_blank" rel="noopener noreferrer" aria-label="Image Credit: NASA/JPL-Caltech (opens in a new tab)">NASA/JPL-Caltech</a></span>
+    <span class="sep" aria-hidden="true">•</span>
+    <span>ExoAtlas is not affiliated with or endorsed by NASA.</span>
+</div>
+</section>
+
+<section class="contact-wrap">
+    <form id="contactForm" class="form-grid" novalidate>
+
+    <div class="form-row">
+        <label for="category">Reason <span aria-hidden="true">*</span></label>
+        <select id="category" name="category" required>
+        <option value="" disabled selected>Select a Reason</option>
+        <option>Contact Us</option>
+        <option>Bug</option>
+        <option>Request Feature</option>
+        <option>Data Issue</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="name">Your name <span aria-hidden="true">*</span></label>
+        <input id="name" name="name" required autocomplete="name" placeholder="Name"/>
+    </div>
+
+    <div class="form-row">
+        <label for="email">Email <span aria-hidden="true">*</span></label>
+        <input id="email" type="email" name="email" required autocomplete="email" placeholder="Email" />
+    </div>
+
+    <div class="form-row">
+        <label for="phone">Phone (optional)</label>
+        <input id="phone" type="tel" name="phone" autocomplete="tel" inputmode="tel"
+            pattern="^\+?[0-9\s().-]{7,20}$" placeholder="Phone" />
+    </div>
+
+    <div class="form-row">
+        <label for="message">Message <span aria-hidden="true">*</span></label>
+        <textarea id="message" name="message" placeholder="Message" required></textarea>
+    </div>
+
+    <input type="hidden" name="page" id="pageField" value="" />
+
+    <!-- Actions row: Turnstile + Button + status (all in the right column) -->
+    <div class="form-row form-actions">
+        <div aria-hidden="true"></div>
+        <div class="actions-right">
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAB43P0Coc4k_VsVs"></div>
+        <button type="submit" id="sendBtn">Send</button>
+        <div id="msg" class="notice" role="status" aria-live="polite"></div>
+        </div>
+    </div>
+    </form>
+    
+  <aside class="disclaimer" aria-label="Privacy notice">
+    <h3>Privacy & Use</h3>
+    <p>We use your submission only to respond to your inquiry. We do not sell your personal information.</p>
+    <ul>
+      <li>No resale or third-party marketing</li>
+      <li>Used solely for support and follow-up</li>
+      <li>Stored securely and deleted on request</li>
+    </ul>
+    <p>See our <a href="/privacy">Privacy Policy</a> for details.</p>
+  </aside>
+</section>    
+
+<!-- Old
 <script>
   const API = "https://api.exoatlas.com/forms/submit";
   const form = document.getElementById('contactForm');
-  const btn  = form.querySelector('button');
-  const msg  = document.getElementById('msg');
+  const btn = form.querySelector('button');
+  const msg = document.getElementById('msg');
 
   document.getElementById('pageField').value = location.href;
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    btn.disabled = true;
-    msg.className = 'notice'; // reset
-    msg.textContent = 'Submitting…';
-
+    btn.disabled = true; msg.textContent = 'Submitting…';
     try {
       const fd = new FormData(form);
       const res = await fetch(API, { method: 'POST', body: fd, mode: 'cors' });
       const text = await res.text();
-      let data = {};
-      try { data = JSON.parse(text); } catch {}
-
-      if (res.ok && data.ok) {
-        msg.className = 'notice success';
-        msg.textContent = 'Thanks—your message was sent!';
+      if (res.ok) {
+        msg.textContent = 'Thanks! Submitted.';
         form.reset();
         if (window.turnstile) turnstile.reset();
+      } else {
+        msg.textContent = `Error: ${text}`;
+      }
+    } catch (err) {
+      msg.textContent = `Network error: ${String(err)}`;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+Old -->
+
+<script>
+  const API = "https://api.exoatlas.com/forms/submit";
+  const form = document.getElementById('contactForm');
+  const btn  = document.getElementById('sendBtn');
+  const msg  = document.getElementById('msg');
+  document.getElementById('pageField').value = location.href;
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    btn.disabled = true; msg.className = 'notice'; msg.textContent = 'Submitting…';
+    try {
+      const fd = new FormData(form);
+      const res = await fetch(API, { method:'POST', body: fd, mode:'cors' });
+      const text = await res.text();
+      let data = {}; try { data = JSON.parse(text); } catch {}
+
+      if (res.ok && data.ok !== false) {
+        msg.className = 'notice success';
+        msg.textContent = 'Thanks—your message was sent!';
+        form.reset(); if (window.turnstile) turnstile.reset();
       } else if (data.error === 'rate_limited') {
-        const eta = data.retry_after_seconds || 0;
+        const mins = Math.ceil((data.retry_after_seconds || 0)/60);
         msg.className = 'notice warning';
-        msg.textContent = data.message || `You’re sending messages a bit quickly. Please try again in ~${Math.ceil(eta/60)} minutes.`;
+        msg.textContent = `You’ve reached the message limit. Please try again in ${mins} minute${mins===1?'':'s'}.`;
       } else {
         msg.className = 'notice error';
-        msg.textContent = 'Sorry—something went wrong. Please try again in a moment.';
+        msg.textContent = 'Sorry—something went wrong. Please try again.';
       }
     } catch (err) {
       msg.className = 'notice error';
       msg.textContent = 'Network issue—please try again.';
     } finally {
       btn.disabled = false;
+      msg.focus?.();
     }
   });
 </script>
-  
+
+</main>
 
 <!-- Global Footer -->
 <footer class="footer">
@@ -196,9 +327,9 @@ gtag('config', 'G-LV8V28JZ0L');
 </div>
 <div class="footer-bottom">
   <div class="footer-socials">
-    <a href="https://www.reddit.com/r/ExoAtlas/" target="_blank" aria-label="Reddit"><i class="fab fa-reddit"></i></a>
-    <a href="https://www.instagram.com/exoatlasexplorer/" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-    <a href="https://x.com/ExoAtlasExplore" target="_blank" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+    <a href="https://www.reddit.com/r/ExoAtlas/" target="_blank" rel="noopener noreferrer" aria-label="Reddit"><i class="fab fa-reddit"></i></a>
+    <a href="https://www.instagram.com/exoatlasexplorer/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+    <a href="https://x.com/ExoAtlasExplore" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
   </div>
   <p>© 2025 ExoAtlas LLC – All Rights Reserved</p>
 </div>
