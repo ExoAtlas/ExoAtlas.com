@@ -119,32 +119,46 @@ gtag('config', 'G-LV8V28JZ0L');
 <script>
   const API = "https://api.exoatlas.com/forms/submit";
   const form = document.getElementById('contactForm');
-  const btn = form.querySelector('button');
-  const msg = document.getElementById('msg');
+  const btn  = form.querySelector('button');
+  const msg  = document.getElementById('msg');
 
   document.getElementById('pageField').value = location.href;
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    btn.disabled = true; msg.textContent = 'Submitting…';
+    btn.disabled = true;
+    msg.className = 'notice'; // reset
+    msg.textContent = 'Submitting…';
+
     try {
       const fd = new FormData(form);
       const res = await fetch(API, { method: 'POST', body: fd, mode: 'cors' });
       const text = await res.text();
-      if (res.ok) {
-        msg.textContent = 'Thanks! Submitted.';
+      let data = {};
+      try { data = JSON.parse(text); } catch {}
+
+      if (res.ok && data.ok) {
+        msg.className = 'notice success';
+        msg.textContent = 'Thanks—your message was sent!';
         form.reset();
         if (window.turnstile) turnstile.reset();
+      } else if (data.error === 'rate_limited') {
+        const eta = data.retry_after_seconds || 0;
+        msg.className = 'notice warning';
+        msg.textContent = data.message || `You’re sending messages a bit quickly. Please try again in ~${Math.ceil(eta/60)} minutes.`;
       } else {
-        msg.textContent = `Error: ${text}`;
+        msg.className = 'notice error';
+        msg.textContent = 'Sorry—something went wrong. Please try again in a moment.';
       }
     } catch (err) {
-      msg.textContent = `Network error: ${String(err)}`;
+      msg.className = 'notice error';
+      msg.textContent = 'Network issue—please try again.';
     } finally {
       btn.disabled = false;
     }
   });
 </script>
+  
 
 <!-- Global Footer -->
 <footer class="footer">
