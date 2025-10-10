@@ -73,3 +73,4 @@ Oct 06, 14:26:02 UTC, tweet posted successfully | In 1995, astronomers Michel Ma
 Oct 07, 14:27:03 UTC, tweet posted successfully | On this day in 1959, the Soviet Luna 3 probe took the first-ever photographs of the far side of the Moon, revealing it to be rugged and cratered. 🌕 #Luna3
 Oct 08, 14:26:43 UTC, tweet posted successfully | In 2007, Peggy Whitson launched on Soyuz TMA-11, becoming the first female commander of the International Space Station. #ISS #WomenInSTEM
 Oct 09, 14:26:08 UTC, tweet posted successfully | In 1604, a supernova now known as Kepler's Supernova was first observed in the constellation Ophiuchus. It remains the most recent supernova in our galaxy to have been observed by the naked eye. ✨ #Supernova
+Oct 10, 14:24:57 UTC, tweet posted successfully | On this day in 1967, the Outer Space Treaty, the foundational legal framework for international space law, entered into force. #SpaceLaw
