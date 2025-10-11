@@ -29,14 +29,14 @@
   border: 1px solid #e6e6e6;
   border-radius: 12px;
   padding: 16px 16px 12px;
-  font-size: 0.95rem;
+  font-size: clamp(0.95rem, 0.88rem + 0.30vw, 1.10rem);
   line-height: 1.45;
   align-self: center;        /* center within the row’s height */
   justify-self: center;      /* center within the column */
   width: 100%;
   max-width: 320px;
 }
-.disclaimer h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.disclaimer h3 { margin: 0 0 8px; font-size: clamp(1.05rem, 0.98rem + 0.50vw, 1.35rem); }
 .disclaimer ul { margin: 8px 0 0 18px; padding: 0; }
 .disclaimer a { color: inherit; text-decoration: underline; }
 
