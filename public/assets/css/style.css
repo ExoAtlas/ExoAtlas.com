@@ -2,7 +2,7 @@
    Base + Layout (sticky footer)
    =========================== */
 
-html, body { height: 100%; }
+html, body { height: auto; }
 
 body {
   margin: 0;
@@ -218,4 +218,5 @@ h1 {
 @media (max-width: 640px) {
   .hero-credit { left: 12px; right: auto; bottom: 10px; font-size: 11px; }
 }
+
 
