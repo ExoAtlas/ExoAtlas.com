@@ -1,0 +1,70 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background-color: #fff;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+textarea, input, button, select {
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 1em;
+}
+textarea, input, select {
+  width: 100%;
+}
+#tleInput {
+  resize: none;
+  font-family: monospace;
+  white-space: pre;
+}
+.section {
+  margin-bottom: 40px;
+}
+.output {
+  white-space: pre-wrap;
+  background-color: #f5f5f5;
+  padding: 10px;
+  border: 1px solid #ccc;
+  height: 100%;
+}
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.form-group label {
+  flex: 0 0 220px;
+  text-align: right;
+  font-weight: bold;
+  margin-right: 10px;
+}
+.form-group input,
+.form-group select {
+  flex: 1;
+}
+.flex-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.section-title {
+  text-align: center;
+}
+.left-column {
+  flex: 1;
+  min-width: 300px;
+}
+.right-column {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 768px) {
+  .flex-row {
+    flex-direction: column;
+  }
+}
