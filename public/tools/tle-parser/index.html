@@ -19,86 +19,94 @@
   <meta name="twitter:description" content="Convert TLEs to orbital elements and ECI state vectors online. No sign-up required.">
   <!-- Commented out for later use <meta name="twitter:image" content="https://www.exoatlas.com/og-image.png"> Just replace og-image.png with a real image that represents your tool (ideally 1200×630px). -->
   <title>Free TLE Parser and Orbital Calculator | Convert TLE to State Vector Online</title>
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/style.css"/>
+  <link rel="stylesheet" href="tle-parser.css" />
+
+<!-- Google Tag Default Consents -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+      dataLayer.push(arguments);
+  }
+  gtag("consent", "default", {
+      ad_storage: "denied",
+      ad_user_data: "denied", 
+      ad_personalization: "denied",
+      analytics_storage: "denied",
+      functionality_storage: "denied",
+      personalization_storage: "denied",
+      security_storage: "granted",
+      wait_for_update: 2000,
+  });
+  gtag("set", "ads_data_redaction", true);
+  gtag("set", "url_passthrough", true);
+</script>
 
 <!-- CMP Banner -->
 <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="624e409b-9156-41f3-ba5b-b43174527092" data-blockingmode="auto" type="text/javascript"></script>
 
   
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #fff;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    textarea, input, button, select {
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 1em;
-    }
-    textarea, input, select {
-      width: 100%;
-    }
-    #tleInput {
-      resize: none;
-      font-family: monospace;
-      white-space: pre;
-    }
-    .section {
-      margin-bottom: 40px;
-    }
-    .output {
-      white-space: pre-wrap;
-      background-color: #f5f5f5;
-      padding: 10px;
-      border: 1px solid #ccc;
-      height: 100%;
-    }
-    .form-group {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .form-group label {
-      flex: 0 0 220px;
-      text-align: right;
-      font-weight: bold;
-      margin-right: 10px;
-    }
-    .form-group input,
-    .form-group select {
-      flex: 1;
-    }
-    .flex-row {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .section-title {
-      text-align: center;
-    }
-    .left-column {
-      flex: 1;
-      min-width: 300px;
-    }
-    .right-column {
-      flex: 1;
-      min-width: 300px;
-      display: flex;
-      flex-direction: column;
-    }
-    @media (max-width: 768px) {
-      .flex-row {
-        flex-direction: column;
-      }
-    }
-  </style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LV8V28JZ0L"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-LV8V28JZ0L');
+</script>
+
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7099143341693852" crossorigin="anonymous"></script>
 </head>
+
+
+
+  
 <body>
+<!-- Sticky Navigation Header -->
+<nav class="site-header">
+    <div class="site-header-inner"> <div class="nav-container">
+            <div class="logo"><a href="/">ExoAtlas</a></div>
+            <div class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/about/">About</a>
+                <a href="/data/">Data</a>
+                <div class="dropdown">
+                    <a href="/tools/">Tools</a>
+                    <div class="dropdown-content">
+                        <a href="/tools/epoch-calculator/">Epoch Calculator</a>
+                        <a href="/tools/light-pollution-map/">Light Pollution Map</a>
+                    </div>
+                </div>
+                <a href="/updates/">Product Updates</a>
+            </div>
+        </div>
+        <div class="nav-cta">
+            <a href="/live/">Live Solar System</a>
+        </div>
+
+        <button class="hamburger-menu" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
+            <div class="hamburger-icon-wrapper"> <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </div>
+            <span class="hamburger-menu-text">Menu</span>
+        </button>
+    </div> 
+</nav>
+
+<div class="mobile-nav-menu" id="mobileNavMenu">
+    <a href="/" class="active">Home</a>
+    <a href="/about/">About</a>
+    <a href="/data/">Data</a>
+    <span class="mobile-nav-parent-link">Tools</span>
+    <a href="/tools/epoch-calculator/" class="mobile-dropdown-item">Epoch Calculator</a>
+    <a href="/tools/light-pollution-map/" class="mobile-dropdown-item">Light Pollution Map</a>
+    <a href="/updates/">Product Updates</a>
+    <a href="/live/" class="mobile-nav-cta-item">Live Solar System</a>
+</div>
+
+  
   <div class="container">
     <h1>Two Line Element (TLE) Parser and Orbital State Vector Calculator</h1>
     <div class="section">
@@ -297,4 +305,5 @@ Velocity (km/s):
   </script>
 </body>
 </html>
+
 
