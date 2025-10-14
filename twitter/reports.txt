@@ -77,3 +77,4 @@ Oct 10, 14:24:57 UTC, tweet posted successfully | On this day in 1967, the Outer
 Oct 11, 14:19:21 UTC, tweet posted successfully | In 1968, Apollo 7 launched, becoming the first crewed flight of the Apollo spacecraft. The 11-day mission tested the command and service module in Earth orbit. #Apollo7
 Oct 12, 14:20:32 UTC, tweet posted successfully | On this day in 1964, the Soviet Union launched Voskhod 1, the first spaceflight to carry more than one person, with a three-cosmonaut crew. #Voskhod1
 Oct 13, 14:27:03 UTC, tweet posted successfully | Today in 2021, actor William Shatner, Captain Kirk of Star Trek, flew to space aboard a Blue Origin New Shepard rocket, becoming the oldest person to do so. 🚀 #WilliamShatner
+Oct 14, 14:27:03 UTC, tweet posted successfully | On this day in 1947, Chuck Yeager became the first person to officially break the sound barrier, piloting the Bell X-1 rocket plane. #SoundBarrier #Aviation
