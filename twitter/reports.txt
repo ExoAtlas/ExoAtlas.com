@@ -79,3 +79,4 @@ Oct 12, 14:20:32 UTC, tweet posted successfully | On this day in 1964, the Sovie
 Oct 13, 14:27:03 UTC, tweet posted successfully | Today in 2021, actor William Shatner, Captain Kirk of Star Trek, flew to space aboard a Blue Origin New Shepard rocket, becoming the oldest person to do so. 🚀 #WilliamShatner
 Oct 14, 14:27:03 UTC, tweet posted successfully | On this day in 1947, Chuck Yeager became the first person to officially break the sound barrier, piloting the Bell X-1 rocket plane. #SoundBarrier #Aviation
 Oct 15, 14:27:26 UTC, tweet posted successfully | In 1997, the Cassini-Huygens spacecraft was launched on its 7-year journey to Saturn, one of the most ambitious planetary missions ever undertaken. #Cassini #Saturn
+Oct 16, 14:26:49 UTC, tweet posted successfully | Happy birthday to astronaut and engineer Mae C. Jemison, the first African American woman in space. 🎂 #MaeJemison
