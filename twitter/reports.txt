@@ -80,3 +80,4 @@ Oct 13, 14:27:03 UTC, tweet posted successfully | Today in 2021, actor William S
 Oct 14, 14:27:03 UTC, tweet posted successfully | On this day in 1947, Chuck Yeager became the first person to officially break the sound barrier, piloting the Bell X-1 rocket plane. #SoundBarrier #Aviation
 Oct 15, 14:27:26 UTC, tweet posted successfully | In 1997, the Cassini-Huygens spacecraft was launched on its 7-year journey to Saturn, one of the most ambitious planetary missions ever undertaken. #Cassini #Saturn
 Oct 16, 14:26:49 UTC, tweet posted successfully | Happy birthday to astronaut and engineer Mae C. Jemison, the first African American woman in space. 🎂 #MaeJemison
+Oct 17, 14:26:10 UTC, tweet posted successfully | On this day in 2017, the LIGO and Virgo observatories detected gravitational waves from a pair of colliding neutron stars, an event that was also seen by conventional telescopes, heralding a new era of astronomy. #LIGO #GravitationalWaves
