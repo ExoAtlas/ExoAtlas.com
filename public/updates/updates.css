@@ -30,7 +30,7 @@
 .updates.post {width: min(1200px, 92vw); margin: 0 auto; }
 .post-body { font-size: 1rem; line-height: 1.7; margin: 1rem 0 1.5rem; }
 .post img { max-width: 100%; height: auto; display: block; }
-.updates h1 {font-size: 4.5rem; font-weight: 700; margin: 0 0 0.5rem 0; color: #000;}
+.updates h1 {font-size: 4.5rem; font-weight: 700; margin: 0 0 0.5rem 0; color: #000; text-align: center;}
 .updates h2 { font-size: 1.5rem; font-weight: 700; margin: 2rem 0 1rem; border-bottom: 2px solid #eee; padding-bottom: .25rem; color: #000; }
 .updates h3 { font-size: 1rem; margin: 1rem 0 0; color: #000; }
 .updates p {margin: 0 0 0.8rem 0; font-size: 1rem; }
