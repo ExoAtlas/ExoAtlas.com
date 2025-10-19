@@ -1,0 +1,19 @@
+.updates {margin: 0 auto; padding-top: 3rem; padding-bottom: 3rem; background: #fff; line-height: 1.7; font-weight: 400; }
+.post-body, .post p, .post li {line-height: 1.7; font-size: 1rem; margin: 1rem 0 1.5rem; }
+.post .meta { color: #6b7280; margin: .5rem 0 1rem; }
+.updates.post {width: min(1200px, 92vw); margin: 0 auto; }
+.post-body { font-size: 1rem; line-height: 1.7; margin: 1rem 0 1.5rem; }
+.post img { max-width: 100%; height: auto; display: block; }
+.updates h1 {font-size: 2.5rem; font-weight: 700; margin: 0 0 0.5rem 0; color: #000;}
+.updates h2 { font-size: 1.5rem; font-weight: 700; margin: 2rem 0 1rem; border-bottom: 2px solid #eee; padding-bottom: .25rem; color: #000; }
+.updates h3 { font-size: 1rem; margin: 1rem 0 0; color: #000; }
+.updates p {margin: 0 0 0.8rem 0; font-size: 1rem; }
+.updates ul, .updates ol {margin: 0 0 0.5rem 0; padding-left: 2rem; font-size: 1rem; }
+.updates li {margin: 0 0 0.25rem 0; font-size: 1rem; }
+.hero-section {position: relative; display: block; width: min(1200px, 92vw); min-height: 220px; margin: 0 auto; overflow: hidden; background: #f6f7f9; }
+.hero-bg img { display:block; width:100%; height:auto; }
+.hero-section .overlay {position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,0)); pointer-events: none}
+.updates a { color: #007bff; text-decoration: underline; }
+.updates a:hover { color: #0056b3; }
+.post-header .post-title { font-size: clamp(1.5rem, 5vw, 2.5rem); margin: .25rem 0 .75rem; }
+.post .meta { color: #6b7280; margin: .5rem 0 1rem; }
