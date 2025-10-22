@@ -85,3 +85,4 @@ Oct 18, 14:21:09 UTC, tweet posted successfully | In 2019, astronauts Christina 
 Oct 19, 14:21:03 UTC, tweet posted successfully | Happy birthday to Subrahmanyan Chandrasekhar (born 1910), the astrophysicist who calculated the maximum mass of a white dwarf star—the Chandrasekhar limit. #Astrophysics
 Oct 20, 14:26:11 UTC, tweet posted successfully | On this day in 2016, the ExoMars Trace Gas Orbiter successfully entered orbit around Mars to study trace gases in its atmosphere. #ExoMars #Mars
 Oct 21, 14:25:30 UTC, tweet posted successfully | The Orionid meteor shower, debris from Comet 1P/Halley, peaks tonight! Look for fast-moving meteors streaking across the sky. 🌠 #Orionids
+Oct 22, 14:28:49 UTC, tweet posted successfully | In 1966, the Soviet Luna 12 probe was launched, successfully entering lunar orbit to map the Moon's surface. #Luna12
