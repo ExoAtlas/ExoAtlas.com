@@ -89,3 +89,4 @@ Oct 22, 14:28:49 UTC, tweet posted successfully | In 1966, the Soviet Luna 12 pr
 Oct 23, 14:27:33 UTC, tweet posted successfully | Happy birthday to astronomer and planetary scientist Carolyn Porco (born 1953), the leader of the imaging science team for the Cassini mission at Saturn. #WomenInSTEM
 Oct 24, 14:27:01 UTC, tweet posted successfully | On this day in 1998, the Deep Space 1 spacecraft was launched, successfully testing 12 advanced, high-risk technologies, including an ion engine. #DeepSpace1
 Oct 25, 14:21:34 UTC, tweet posted successfully | In 1671, astronomer Giovanni Cassini discovered Iapetus, a two-toned moon of Saturn with a mysterious equatorial ridge. #Iapetus #Saturn
+Oct 26, 14:21:44 UTC, tweet posted successfully | Today in 2006, the STEREO (Solar Terrestrial Relations Observatory) mission was launched, with two nearly identical spacecraft providing the first-ever 3D views of the Sun. ☀️ #STEREO #Sun
