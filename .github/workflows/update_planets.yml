@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install packaging requests psycopg2-binary google-cloud-storage boto3
+          pip install packaging google-cloud-storage google-api-core psycopg2-binary boto3 botocore requests
 
       - name: 'Authenticate to Google Cloud'
         id: 'auth'
