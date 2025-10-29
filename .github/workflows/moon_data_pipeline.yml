@@ -38,13 +38,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install packaging beautifulsoup4 google-cloud-storage google-api-core psycopg2-binary boto3 botocore requests
-      - name: Verify deps
-        run: |
-          python - <<'PY'
-      import sys, pkgutil
-      assert pkgutil.find_loader("bs4"), "bs4 not installed for this Python!"
-      print("OK: bs4 present in", sys.executable)
-      PY
 
       - name: Fetch ${{ matrix.planet }} moons from NASA HORIZONS
         env:
