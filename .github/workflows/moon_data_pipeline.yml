@@ -141,8 +141,6 @@ jobs:
           PGPASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           psql "host=127.0.0.1 port=5432 user=${{ secrets.DB_USER }} dbname=${{ secrets.DB_NAME }} sslmode=disable" -c "select now();"
-        run: |
-          # Example: script reads build/moons_all.(json|csv) and upserts
           python ./backend/datapipe/upsert_moons.py --in-json build/moons_all.json
 
       # === Publish artifacts ===
