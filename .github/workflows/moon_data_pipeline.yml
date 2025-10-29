@@ -58,7 +58,7 @@ jobs:
           set -euo pipefail
           mkdir -p data/moons
           # Example: adapt your script to accept --planet / --out-json / --out-csv
-          python ./backend/datapipe/fetch_moons.py \
+          python ./backend/datapipe/moon_data_fetcher.py \
             --planet "$PLANET" \
             --out-json "$OUT_JSON" \
             --out-csv "$OUT_CSV"
