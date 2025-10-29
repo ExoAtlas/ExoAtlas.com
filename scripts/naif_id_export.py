@@ -39,63 +39,63 @@ def env_bool(name: str, default: bool = False) -> bool:
         return default
     return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
 
+def _get_sbdb(params: dict) -> dict:
+    """GET with basic retries and helpful error text on failure."""
+    for attempt in range(3):
+        r = requests.get(SBDB_QUERY_URL, params=params, timeout=60)
+        if r.status_code == 200:
+            return r.json()
+        # Surface API error body to logs to diagnose quickly
+        msg = f"SBDB {r.status_code} for {r.url}\nBody: {r.text[:4000]}"
+        if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
+            time.sleep(2 * (attempt + 1))
+            continue
+        raise requests.HTTPError(msg)
+
 def fetch_sbdb(limit: int, days_lookback: int, include_comets: bool) -> t.List[dict]:
     """
     Queries SBDB for numbered small bodies updated recently.
-    We request key fields and then derive NAIF/SPK IDs per NAIF convention:
+    We derive NAIF/SPK IDs per NAIF convention:
       asteroid: 2000000 + number
-      comet:    1000000 + comet_seq (SBDB exposes 'comet_des' / 'pdes' nuances; we best-effort map)
-
-    NOTE: SBDB's filter syntax is flexible; if the query returns 400,
-    adjust 'where' or drop lookback to widen results.
+      comet:    1000000 + sequence (best-effort)
     """
     since = (datetime.now(timezone.utc) - timedelta(days=days_lookback)).date().isoformat()
-
-    # Request both asteroids and (optionally) comets in two calls for clarity.
     rows: t.List[dict] = []
 
     # ---- Asteroids ----
+    # Use last_obs only; 'updated' causes 400s on sbdb_query.api in some cases.
     params_ast = {
-        "fields": "number,full_name,updated,last_obs",
-        "where": f"number>0 and (updated>='{since}' or last_obs>='{since}')",
+        "fields": "number,full_name,last_obs",
+        "where": f"number>0 and last_obs>='{since}'",
         "limit": str(limit),
         "order": "-number",
     }
-    r = requests.get(SBDB_QUERY_URL, params=params_ast, timeout=60)
-    r.raise_for_status()
-    data = r.json()
+    data = _get_sbdb(params_ast)
     for rec in data.get("data", []):
-        number, full_name, updated, last_obs = rec
+        number, full_name, last_obs = rec
         try:
             number = int(number)
         except Exception:
             continue
         spkid = 2000000 + number
-        name = str(full_name).strip()
-        rows.append({"object_id": spkid, "name": name})
+        rows.append({"object_id": spkid, "name": str(full_name).strip()})
 
     # ---- Comets (optional) ----
     if include_comets:
         params_cmt = {
-            "fields": "pdes,full_name,updated,last_obs",   # pdes often a stable periodic designation
-            "where": f"(updated>='{since}' or last_obs>='{since}') and comet=1",
+            "fields": "pdes,full_name,last_obs",
+            "where": f"comet=1 and last_obs>='{since}'",
             "limit": str(limit),
-            "order": "-updated",
+            "order": "-last_obs",
         }
-        rc = requests.get(SBDB_QUERY_URL, params=params_cmt, timeout=60)
-        rc.raise_for_status()
-        dc = rc.json()
+        dc = _get_sbdb(params_cmt)
         for rec in dc.get("data", []):
-            pdes, full_name, updated, last_obs = rec
-            # Best-effort: assign a synthetic sequence if SBDB doesn't expose a simple integer.
-            # Many tools map specific comet IDs; here we hash a stable number for cataloging.
-            # If you prefer official NAIF comet SPK scheme, swap this with your internal mapping table.
-            seq = abs(hash(pdes)) % 900000  # keep it bounded
+            pdes, full_name, last_obs = rec
+            seq = abs(hash(pdes)) % 900000  # bounded synthetic sequence
             spkid = 1000000 + seq
-            name = str(full_name).strip()
-            rows.append({"object_id": spkid, "name": name})
+            rows.append({"object_id": spkid, "name": str(full_name).strip()})
 
-    # Deduplicate by object_id, prefer latest name encountered
+    # Deduplicate by object_id
     out = {}
     for rrow in rows:
         out[rrow["object_id"]] = rrow["name"]
