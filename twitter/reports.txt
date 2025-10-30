@@ -93,3 +93,4 @@ Oct 26, 14:21:44 UTC, tweet posted successfully | Today in 2006, the STEREO (Sol
 Oct 27, 14:27:45 UTC, tweet posted successfully | Happy birthday to astronaut and naval aviator Michael J. Smith (born 1945), who served as the pilot of the Space Shuttle Challenger's final mission, STS-51-L. #Astronaut
 Oct 28, 14:28:02 UTC, tweet posted successfully | On this day in 1961, the first Saturn I rocket was launched on a successful suborbital test flight, a key step on the path to the Moon. 🚀 #SaturnI #NASA
 Oct 29, 14:28:00 UTC, tweet posted successfully | In 1991, the Galileo spacecraft performed the first-ever close flyby of an asteroid, 951 Gaspra. #Galileo #Asteroid
+Oct 30, 14:27:23 UTC, tweet posted successfully | On this day in 1985, the Space Shuttle Challenger launched on mission STS-61-A, carrying the German Spacelab D-1 and a record crew of eight astronauts. #SpaceShuttle
