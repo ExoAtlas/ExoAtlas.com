@@ -95,3 +95,4 @@ Oct 28, 14:28:02 UTC, tweet posted successfully | On this day in 1961, the first
 Oct 29, 14:28:00 UTC, tweet posted successfully | In 1991, the Galileo spacecraft performed the first-ever close flyby of an asteroid, 951 Gaspra. #Galileo #Asteroid
 Oct 30, 14:27:23 UTC, tweet posted successfully | On this day in 1985, the Space Shuttle Challenger launched on mission STS-61-A, carrying the German Spacelab D-1 and a record crew of eight astronauts. #SpaceShuttle
 Oct 31, 14:27:16 UTC, tweet posted successfully | In 2000, the Expedition 1 crew launched aboard a Soyuz rocket, becoming the first long-duration crew to live on the International Space Station. Happy Halloween! 🎃 #ISS
+Nov 01, 14:21:21 UTC, tweet posted successfully | In 1963, the Arecibo Observatory in Puerto Rico was officially dedicated. For decades, its massive 305-meter dish was the largest single-aperture radio telescope in the world. 📡 #Arecibo
