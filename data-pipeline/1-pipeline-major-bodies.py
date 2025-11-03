@@ -101,6 +101,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")  # optional override
 # GCS
 GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
 GCS_OBJECT_NAME = os.environ.get("GCS_OBJECT_NAME", "workflow/live/major-bodies.csv")
+GCS_CACHE_CONTROL = os.environ.get("GCS_CACHE_CONTROL", "public, max-age=86400")
 
 # R2 (S3-compatible)
 R2_ENDPOINT = os.environ.get("R2_ENDPOINT")  # https://<accountid>.r2.cloudflarestorage.com
@@ -108,6 +109,7 @@ R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.environ.get("R2_BUCKET")
 R2_JSON_KEY = os.environ.get("R2_JSON_KEY", "major-bodies.json")
+R2_CACHE_CONTROL = os.environ.get("R2_CACHE_CONTROL", "public, max-age=86400") 
 
 # Output filenames
 OUT_CSV_NAME = os.environ.get("OUT_CSV_NAME", "major-bodies.csv")
@@ -115,7 +117,7 @@ OUT_JSON_NAME = os.environ.get("OUT_JSON_NAME", "major-bodies.json")
 TMP_CSV_PATH = Path("/tmp") / OUT_CSV_NAME
 TMP_JSON_PATH = Path("/tmp") / OUT_JSON_NAME
 
-TABLE_NAME = "public.planet_catalog"
+TABLE_NAME = "public.major-body_catalog"
 
 # ------------------------------ Helpers ------------------------------
 
@@ -319,22 +321,24 @@ def gcs_upload(local_path: Path, bucket_name: str, object_name: str) -> str:
     client = storage.Client()  # ADC (OIDC) picked up automatically in CI
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
-    blob.cache_control = "public, max-age=86400"  # 1 day
+    blob.cache_control = GCS_CACHE_CONTROL
     blob.upload_from_filename(str(local_path), content_type="text/csv; charset=utf-8")
     return f"gs://{bucket_name}/{object_name}"
 
 def r2_upload_json(json_path: Path, bucket: str, key: str) -> str:
     session = boto3.session.Session()
+    endpoint = (R2_ENDPOINT or "").rstrip("/")
     s3 = session.client(
         service_name="s3",
         aws_access_key_id=R2_ACCESS_KEY_ID,
         aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        endpoint_url=R2_ENDPOINT,
+        endpoint_url=endpoint if endpoint else None, 
         config=Config(signature_version="s3v4"),
+        region_name="auto",
     )
     extra = {
         "ContentType": "application/json; charset=utf-8",
-        "CacheControl": "public, max-age=86400",
+        "CacheControl": R2_CACHE_CONTROL,
     }
     s3.upload_file(str(json_path), bucket, key, ExtraArgs=extra)
     return f"{bucket}/{key}"
@@ -368,6 +372,7 @@ def main() -> int:
 
     # 5) JSON → local + R2
     try:
+        TMP_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
         TMP_JSON_PATH.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
         if all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_JSON_KEY]):
             obj = r2_upload_json(TMP_JSON_PATH, R2_BUCKET, R2_JSON_KEY)
