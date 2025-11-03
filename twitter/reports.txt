@@ -97,3 +97,4 @@ Oct 30, 14:27:23 UTC, tweet posted successfully | On this day in 1985, the Space
 Oct 31, 14:27:16 UTC, tweet posted successfully | In 2000, the Expedition 1 crew launched aboard a Soyuz rocket, becoming the first long-duration crew to live on the International Space Station. Happy Halloween! 🎃 #ISS
 Nov 01, 14:21:21 UTC, tweet posted successfully | In 1963, the Arecibo Observatory in Puerto Rico was officially dedicated. For decades, its massive 305-meter dish was the largest single-aperture radio telescope in the world. 📡 #Arecibo
 Nov 02, 14:21:32 UTC, tweet posted successfully | On this day in 2000, the Expedition 1 crew docked with the International Space Station, beginning an era of continuous human presence in space that continues to this day. #ISS
+Nov 03, 14:27:01 UTC, tweet posted successfully | In 1957, the Soviet Union launched Sputnik 2, carrying the dog Laika, the first animal to orbit the Earth. #Sputnik2 #Laika
