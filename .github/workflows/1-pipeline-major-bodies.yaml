@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
-  update-planet-data:
+  update-major-body-data:
     runs-on: ubuntu-latest
     timeout-minutes: 5
       
@@ -84,6 +84,7 @@ jobs:
           # ---- Google Cloud Storage (GCS) Bucket ----
           GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
           GCS_OBJECT_NAME: workflow/live/major-bodies.csv
+          R2_CACHE_CONTROL: public, max-age=3600, s-maxage=86400, immutable
           # ---- Cloudflare R2 (S3-compatible) ----
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -94,7 +95,18 @@ jobs:
           OUT_CSV_NAME: workflow/live/major-bodies.csv
           OUT_JSON_NAME: live/major-bodies.json    
         run: |
+          echo "Run UTC: $(date -u +%Y-%m-%dT%H:%M:%S%z)"
           python ./data-pipeline/1-pipeline-major-bodies.py
+
+      # Optional: show what files were created in /tmp (debug)
+      - name: List /tmp artifacts
+        if: always()
+        run: |
+          echo "CSV path: /tmp/${OUT_CSV_NAME}"
+          echo "JSON path: /tmp/${OUT_JSON_NAME}"
+          ls -lah /tmp || true
+          ls -lah "/tmp/$(dirname ${OUT_CSV_NAME})" || true
+          ls -lah "/tmp/$(dirname ${OUT_JSON_NAME})" || true
 
       - name: Show Proxy Logs (on failure)
         if: failure()
