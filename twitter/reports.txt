@@ -101,3 +101,4 @@ Nov 03, 14:27:01 UTC, tweet posted successfully | In 1957, the Soviet Union laun
 Nov 04, 14:27:43 UTC, tweet posted successfully | Happy birthday to Charles K. Kao (born 1933), the Nobel Prize-winning physicist whose work on fiber optics revolutionized global communications. #FiberOptics
 Nov 05, 14:27:18 UTC, tweet posted successfully | On this day in 1964, NASA launched Mariner 3 on a flyby mission to Mars. The mission failed when its payload shroud did not jettison. #Mariner3 #Mars
 Nov 06, 14:27:16 UTC, tweet posted successfully | In 1572, a supernova now known as Tycho's Supernova was first observed in the constellation Cassiopeia. It was visible in daylight for over two weeks. ✨ #Supernova #Tycho
+Nov 07, 14:26:10 UTC, tweet posted successfully | On this day in 1996, NASA launched the Mars Global Surveyor, a trailblazing mission that mapped the Red Planet in unprecedented detail. #MarsGlobalSurveyor
