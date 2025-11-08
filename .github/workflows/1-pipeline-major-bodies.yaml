@@ -48,13 +48,3 @@ jobs:
           echo "Run UTC: $(date -u +%Y-%m-%dT%H:%M:%S%z)"
           python ./data-pipeline/1-pipeline-major-bodies.py
 
-      # Optional: show what files were created in /tmp (debug)
-      - name: List /tmp artifacts
-        if: always()
-        run: |
-          echo "CSV path: /tmp/${OUT_CSV_NAME}"
-          echo "JSON path: /tmp/${OUT_JSON_NAME}"
-          ls -lah /tmp || true
-          ls -lah "/tmp/$(dirname ${OUT_CSV_NAME})" || true
-          ls -lah "/tmp/$(dirname ${OUT_JSON_NAME})" || true
-
