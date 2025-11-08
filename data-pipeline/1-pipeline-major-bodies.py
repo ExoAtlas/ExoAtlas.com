@@ -23,9 +23,6 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 import requests
-import psycopg2
-from psycopg2.extras import execute_values
-from google.cloud import storage
 import boto3
 from botocore.client import Config
 
@@ -90,19 +87,6 @@ START_TIME_STR = START_TIME_DT.strftime("%Y-%m-%d")
 STOP_TIME_STR  = STOP_TIME_DT.strftime("%Y-%m-%d")
 
 # ---- ENV (set by GitHub Actions) ----
-# Cloud SQL (via proxy)
-PGHOST = os.environ.get("PGHOST", "127.0.0.1")
-PGPORT = int(os.environ.get("PGPORT", "5432"))
-PGUSER = os.environ.get("PGUSER")
-PGPASSWORD = os.environ.get("PGPASSWORD")
-PGDATABASE = os.environ.get("PGDATABASE")
-DATABASE_URL = os.environ.get("DATABASE_URL")  # optional override
-
-# GCS
-GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
-GCS_OBJECT_NAME = os.environ.get("GCS_OBJECT_NAME", "workflow/live/major-bodies.csv")
-GCS_CACHE_CONTROL = os.environ.get("GCS_CACHE_CONTROL", "public, max-age=86400")
-
 # R2 (S3-compatible)
 R2_ENDPOINT = os.environ.get("R2_ENDPOINT")  # https://<accountid>.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
@@ -117,7 +101,6 @@ OUT_JSON_NAME = os.environ.get("OUT_JSON_NAME", "major-bodies.json")
 TMP_CSV_PATH = Path("/tmp") / OUT_CSV_NAME
 TMP_JSON_PATH = Path("/tmp") / OUT_JSON_NAME
 
-TABLE_NAME = "public.major-body_catalog"
 
 # ------------------------------ Helpers ------------------------------
 
@@ -235,96 +218,6 @@ def write_csv(rows: List[Dict[str, Any]], path: Path) -> None:
         for row in rows:
             w.writerow({k: row.get(k, "") for k in fieldnames})
 
-def _num(x):
-    try:
-        if x is None or x == "":
-            return None
-        return float(str(x).replace(",", ""))
-    except Exception:
-        return None
-
-def pg_connect():
-    if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL, connect_timeout=10)
-    # proxy on localhost: disable SSL for proxy connections
-    return psycopg2.connect(
-        host=PGHOST, port=PGPORT, user=PGUSER, password=PGPASSWORD, dbname=PGDATABASE,
-        connect_timeout=10, sslmode="disable"
-    )
-
-def pg_upsert(rows: List[Dict[str, Any]]) -> int:
-    if not rows:
-        return 0
-    ddl = f"""
-    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-      objnum      text PRIMARY KEY,
-      category    text NOT NULL,
-      name        text NOT NULL,
-      naif_id     text NOT NULL,
-      a           numeric,
-      e           numeric,
-      i           numeric,
-      omega_big   numeric, -- Ω
-      omega_small numeric, -- ω
-      nu_true     numeric, -- ν
-      epoch       text,
-      radius_km   numeric,
-      mu_km3s2    numeric,
-      rot_rate    numeric,
-      rot_lat     numeric,
-      rot_lon     numeric,
-      updated_at  timestamptz NOT NULL DEFAULT now()
-    );
-    """
-    tuples = []
-    for r in rows:
-        tuples.append((
-            r.get("objnum"), r.get("category"), r.get("name"), r.get("naif_id"),
-            _num(r.get("a")), _num(r.get("e")), _num(r.get("i")),
-            _num(r.get("Ω")), _num(r.get("ω")), _num(r.get("ν")),
-            r.get("epoch"),
-            _num(r.get("r")), _num(r.get("μ")),
-            _num(r.get("R_rate")), _num(r.get("R_lat")), _num(r.get("R_lon")),
-        ))
-    insert_sql = f"""
-    INSERT INTO {TABLE_NAME}
-    (objnum,category,name,naif_id,a,e,i,omega_big,omega_small,nu_true,epoch,radius_km,mu_km3s2,rot_rate,rot_lat,rot_lon)
-    VALUES %s
-    ON CONFLICT (objnum) DO UPDATE SET
-      category=EXCLUDED.category,
-      name=EXCLUDED.name,
-      naif_id=EXCLUDED.naif_id,
-      a=EXCLUDED.a,
-      e=EXCLUDED.e,
-      i=EXCLUDED.i,
-      omega_big=EXCLUDED.omega_big,
-      omega_small=EXCLUDED.omega_small,
-      nu_true=EXCLUDED.nu_true,
-      epoch=EXCLUDED.epoch,
-      radius_km=EXCLUDED.radius_km,
-      mu_km3s2=EXCLUDED.mu_km3s2,
-      rot_rate=EXCLUDED.rot_rate,
-      rot_lat=EXCLUDED.rot_lat,
-      rot_lon=EXCLUDED.rot_lon,
-      updated_at=now();
-    """
-    conn = pg_connect()
-    try:
-        with conn, conn.cursor() as cur:
-            cur.execute(ddl)
-            execute_values(cur, insert_sql, tuples, page_size=50)
-        return len(tuples)
-    finally:
-        conn.close()
-
-def gcs_upload(local_path: Path, bucket_name: str, object_name: str) -> str:
-    client = storage.Client()  # ADC (OIDC) picked up automatically in CI
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(object_name)
-    blob.cache_control = GCS_CACHE_CONTROL
-    blob.upload_from_filename(str(local_path), content_type="text/csv; charset=utf-8")
-    return f"gs://{bucket_name}/{object_name}"
-
 def r2_upload_json(json_path: Path, bucket: str, key: str) -> str:
     session = boto3.session.Session()
     endpoint = (R2_ENDPOINT or "").rstrip("/")
@@ -356,21 +249,7 @@ def main() -> int:
     write_csv(rows, TMP_CSV_PATH)
     print(f"[ok] CSV written: {TMP_CSV_PATH} ({len(rows)} rows)")
 
-    # 3) UPSERT to Cloud SQL (via proxy)
-    try:
-        n = pg_upsert(rows)
-        print(f"[ok] Postgres upserted: {n} rows into {TABLE_NAME}")
-    except Exception as e:
-        print(f"[err] Postgres upsert failed: {e}")
-
-    # 4) Upload CSV to GCS
-    try:
-        gcs_uri = gcs_upload(TMP_CSV_PATH, GCS_BUCKET_NAME, GCS_OBJECT_NAME or OUT_CSV_NAME)
-        print(f"[ok] GCS uploaded: {gcs_uri}")
-    except Exception as e:
-        print(f"[err] GCS upload failed: {e}")
-
-    # 5) JSON → local + R2
+    # 3) JSON → local + R2
     try:
         TMP_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
         TMP_JSON_PATH.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
