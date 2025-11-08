@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: 'read'
-  id-token: 'write' 
 
 concurrency:
   group: ${{ github.workflow }}
@@ -57,6 +56,3 @@ jobs:
           ls -lah /tmp || true
           ls -lah "/tmp/$(dirname ${OUT_CSV_NAME})" || true
           ls -lah "/tmp/$(dirname ${OUT_JSON_NAME})" || true
-          echo "==== cloud-sql-proxy logs ===="
-          cat proxy.log || true
-
