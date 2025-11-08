@@ -40,6 +40,7 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_JSON_KEY: live/major-bodies.json
+          R2_CSV_KEY:  live/major-bodies.csv
           # ---- Output Settings ----
           OUT_CSV_NAME: live/major-bodies.csv
           OUT_JSON_NAME: live/major-bodies.json    
@@ -56,3 +57,4 @@ jobs:
           ls -lah /tmp || true
           ls -lah "/tmp/$(dirname ${OUT_CSV_NAME})" || true
           ls -lah "/tmp/$(dirname ${OUT_JSON_NAME})" || true
+
