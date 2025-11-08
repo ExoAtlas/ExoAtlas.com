@@ -3,9 +3,8 @@ NASA Horizons → ExoAtlas JSON Converter (Planets + Dwarf Planets)
 -----------------------------------------------------------------
 Fetches GEOMETRIC osculating elements (Ecliptic of J2000, TDB, KM-S, degrees)
 from NASA/JPL Horizons for a fixed catalog of NAIF IDs and writes:
-  1) CSV → /tmp → Google Cloud Storage
+  1) CSV → /tmp → Cloudflare R2
   2) JSON → /tmp → Cloudflare R2
-  3) UPSERT rows into Postgres (Cloud SQL via Auth Proxy)
 
 CENTER: Solar System Barycenter (@0) to match your parent mapping.
 
@@ -271,3 +270,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
