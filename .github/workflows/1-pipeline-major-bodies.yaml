@@ -30,69 +30,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install packaging google-cloud-storage google-api-core psycopg2-binary boto3 botocore requests
+          pip install packaging boto3 botocore requests
 
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/exoatlas'
-          service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
-          create_credentials_file: true
-          export_environment_variables: true
-
-      - name: Download Cloud SQL Auth Proxy v2
+      - name: Update R2 "/live/major-bodies.json"
         env:
-          PROXY_VERSION: v2.18.1
-        run: |
-          wget -q https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${PROXY_VERSION}/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
-          chmod +x cloud-sql-proxy
-
-      - name: Start Cloud SQL Proxy
-        env:
-          INSTANCE_CONNECTION_NAME:  ${{ secrets.GOOGLE_CLOUDSQL_INSTANCE }}
-          port: 5432
-          quiet: true
-        run: |
-          set -euo pipefail
-          ./cloud-sql-proxy --port 5432 "$INSTANCE_CONNECTION_NAME" > proxy.log 2>&1 &
-          for i in {1..30}; do
-            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break
-            sleep 1
-          done
-          (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 || { echo "Proxy failed to start"; tail -n +1 proxy.log; exit 1; }
-    
-      - name: Install psql client
-        run: |
-          sudo apt-get update -y && sudo apt-get install -y postgresql-client
-
-      - name: Test Cloud PostgreSQL DB connection
-        env:
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: |
-          psql "host=127.0.0.1 port=5432 user=${{ secrets.DB_USER }} dbname=${{ secrets.DB_NAME }} sslmode=disable" -c "select now();"
-
-      - name: Update GCS "/workflow/live/major-bodies.csv" and R2 "/live/major-bodies.json"
-        env:
-          # Cloud SQL (Postgres) connection - pick either DATABASE_URL or the discrete vars
-          GCP_PROJECT_ID: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
-          PGHOST: 127.0.0.1
-          PGPORT: 5432
-          PGUSER: ${{ secrets.DB_USER }}
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.DB_NAME }}
-          # ---- Google Cloud Storage (GCS) Bucket ----
-          GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
-          GCS_OBJECT_NAME: workflow/live/major-bodies.csv
-          R2_CACHE_CONTROL: public, max-age=3600, s-maxage=86400, immutable
           # ---- Cloudflare R2 (S3-compatible) ----
+          R2_CACHE_CONTROL: public, max-age=3600, s-maxage=86400, immutable
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_JSON_KEY: live/major-bodies.json
           # ---- Output Settings ----
-          OUT_CSV_NAME: workflow/live/major-bodies.csv
+          OUT_CSV_NAME: live/major-bodies.csv
           OUT_JSON_NAME: live/major-bodies.json    
         run: |
           echo "Run UTC: $(date -u +%Y-%m-%dT%H:%M:%S%z)"
@@ -107,9 +57,6 @@ jobs:
           ls -lah /tmp || true
           ls -lah "/tmp/$(dirname ${OUT_CSV_NAME})" || true
           ls -lah "/tmp/$(dirname ${OUT_JSON_NAME})" || true
-
-      - name: Show Proxy Logs (on failure)
-        if: failure()
-        run: |
           echo "==== cloud-sql-proxy logs ===="
           cat proxy.log || true
+
