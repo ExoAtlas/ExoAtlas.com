@@ -2,7 +2,7 @@ name: Major Bodies Data Update - Daily (NASA Horizons)
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '10 0 * * 5'
   workflow_dispatch:
 
 permissions:
@@ -47,5 +47,6 @@ jobs:
         run: |
           echo "Run UTC: $(date -u +%Y-%m-%dT%H:%M:%S%z)"
           python ./data-pipeline/1-pipeline-major-bodies.py
+
 
 
