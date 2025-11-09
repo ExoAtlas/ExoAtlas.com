@@ -1,13 +1,12 @@
 # ExoAtlas asteroid catalog fetcher & publisher
 #
-# - Downloads MPCORB.DAT.gz from Minor Planet Center
-# - Parses ONLY numbered objects (skips provisional-only designations)
-# - Stores compact orbital elements in Postgres table "asteroid_catalog"
-# - Exports a CSV to GCS
-# - Builds JSON shards for R2 grouped by orbital regime (semi-major axis and perihelion)
-#   with small, web-friendly file sizes.
+# - Downloads MPCORB.DAT.gz from MPC
+# - Parses ONLY numbered objects
+# - Writes a compact CSV locally
+# - Builds compact JSON shards + index manifest
+# - Uploads CSV + JSON to Cloudflare R2 (S3-compatible)
 #
-# Fields kept (DB/CSV/JSON):
+# Fields kept (CSV/JSON):
 #     id (int)          -- MPC number
 #     name (str)        -- common name without the leading "(####) "
 #     H, G (float)
@@ -15,16 +14,6 @@
 #     M, w, Omega, i, e, n, a (float)  [degrees for angles, a in AU, n in deg/day]
 #
 # Environment variables:
-#     DB_HOST (default: 127.0.0.1)
-#     DB_PORT (default: 5432)
-#     DB_USER
-#     DB_PASSWORD
-#     DB_NAME
-#
-#     GCS_BUCKET_NAME             -- e.g. "exoatlas-prod"
-#     SKIP_GCS_EXPORT             -- "1" to skip CSV upload, default "0"
-#     GCS_CSV_OBJECT_NAME         -- default: "asteroids/asteroid_catalog.csv"
-#
 #     R2_ENDPOINT                 -- e.g. "https://<accountid>.r2.cloudflarestorage.com"
 #     R2_BUCKET                   -- bucket name
 #     R2_ACCESS_KEY_ID
@@ -38,6 +27,7 @@
 
 from __future__ import annotations
 
+import csv
 import gzip
 import io
 import json
@@ -48,16 +38,7 @@ import time
 import typing as t
 from datetime import datetime, timezone
 from pathlib import Path
-
-import pandas as pd
-import psycopg2
 import requests
-from psycopg2.extras import execute_batch
-
-# ---- Cloud exports (optional) ------------------------------------------------
-
-# GCS
-from google.cloud import storage
 
 # R2 (S3-compatible)
 import boto3
@@ -69,18 +50,6 @@ from botocore.client import Config
 
 # Canonical MPC URL
 MPCORB_URL = "https://www.minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
-
-# DB
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
-TABLE_NAME = os.getenv("TABLE_NAME", "asteroid_catalog")  # canonical name
-
-# GCS (optional)
-GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
-GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "workflow/asteroids_numbered.csv")
 
 # R2 (optional; if any missing, JSON upload to R2 is skipped)
 R2_ENDPOINT = os.getenv("R2_ENDPOINT")
@@ -97,9 +66,6 @@ EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "20000"))
 # Limit rows in test runs (0 = unlimited)
 MAX_ROWS_INGEST = int(os.getenv("MAX_ROWS_INGEST", "0"))
 
-# Skip GCS export?
-SKIP_GCS_EXPORT = os.getenv("SKIP_GCS_EXPORT", "").lower() in {"1", "true", "yes"}
-
 REQUEST_TIMEOUT = (10, 120)  # (connect, read)
 TMP_DIR = Path("/tmp")
 
@@ -110,110 +76,6 @@ TMP_DIR = Path("/tmp")
 def log(msg: str) -> None:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     print(f"[{now}] {msg}", flush=True)
-
-# ------------------------------------------------------------------------------
-# DB helpers
-# ------------------------------------------------------------------------------
-
-def get_db_connection():
-    if not DB_PASSWORD:
-        raise RuntimeError("DB_PASSWORD is not set")
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dbname=DB_NAME,
-        sslmode="disable",            # proxy handles TLS in CI
-        connect_timeout=20,
-        application_name="mpc_data_fetcher",
-    )
-    conn.autocommit = False
-    return conn
-
-def table_exists(conn, table_name: str) -> bool:
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_schema='public' AND table_name=%s
-            LIMIT 1
-            """,
-            (table_name,),
-        )
-        return cur.fetchone() is not None
-
-def ensure_schema(conn) -> None:
-    """
-    Compact, numbered-only table:
-
-      asteroid_catalog (
-        id INT PRIMARY KEY,
-        name TEXT NOT NULL,
-        raw_line TEXT NOT NULL,
-        H REAL, G REAL,
-        epoch_mjd INT,
-        M REAL, w REAL, Omega REAL, i REAL, e REAL, n REAL, a REAL,
-        last_updated TIMESTAMPTZ DEFAULT NOW()
-      )
-
-    If an older table named 'mpc_objects' exists, rename it to 'asteroid_catalog'.
-    If a very old 'mpc_objects_raw' exists, migrate numbered rows once, then drop it.
-    """
-    with conn.cursor() as cur:
-        if not table_exists(conn, TABLE_NAME):
-            if table_exists(conn, "mpc_objects"):
-                log("Renaming existing table mpc_objects → asteroid_catalog ...")
-                cur.execute("ALTER TABLE mpc_objects RENAME TO asteroid_catalog;")
-            else:
-                log("Creating table asteroid_catalog ...")
-                cur.execute(
-                    f"""
-                    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-                        id INTEGER PRIMARY KEY,
-                        name TEXT NOT NULL,
-                        raw_line TEXT NOT NULL,
-                        H REAL,
-                        G REAL,
-                        epoch_mjd INTEGER,
-                        M REAL,
-                        w REAL,
-                        Omega REAL,
-                        i REAL,
-                        e REAL,
-                        n REAL,
-                        a REAL,
-                        last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                    );
-                    """
-                )
-
-        # One-time migration from very old raw table, if present.
-        if table_exists(conn, "mpc_objects_raw"):
-            log("Legacy mpc_objects_raw detected: migrating numbered rows → asteroid_catalog ...")
-            cur.execute(
-                f"""
-                INSERT INTO {TABLE_NAME}
-                    (id, name, raw_line, H, G, epoch_mjd, M, w, Omega, i, e, n, a, last_updated)
-                SELECT
-                    mp_number AS id,
-                    COALESCE(NULLIF(name, ''), NULLIF(prov_desig, ''), NULLIF(packed_desig, '')) AS name,
-                    raw_line,
-                    h_mag AS H, g_slope AS G,
-                    epoch_mjd, mean_anomaly_deg AS M, arg_perihelion_deg AS w,
-                    long_asc_node_deg AS Omega, inclination_deg AS i, eccentricity AS e,
-                    mean_daily_motion_deg AS n, semimajor_axis_au AS a,
-                    NOW()
-                FROM mpc_objects_raw
-                WHERE mp_number IS NOT NULL
-                ON CONFLICT (id) DO NOTHING;
-                """
-            )
-            log("Dropping legacy table mpc_objects_raw ...")
-            cur.execute("DROP TABLE IF EXISTS mpc_objects_raw;")
-
-    conn.commit()
 
 # ------------------------------------------------------------------------------
 # Parsing helpers
@@ -292,95 +154,8 @@ def is_data_line(line: str) -> bool:
     return len(s) > 40
 
 # ------------------------------------------------------------------------------
-# DB write & export
+# R2 helpers
 # ------------------------------------------------------------------------------
-
-UPSERT_SQL_SINGLE = f"""
-INSERT INTO {TABLE_NAME} (
-    id, name, raw_line, H, G, epoch_mjd, M, w, Omega, i, e, n, a, last_updated
-) VALUES (
-    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
-)
-ON CONFLICT (id) DO UPDATE SET
-    name         = EXCLUDED.name,
-    raw_line     = EXCLUDED.raw_line,
-    H            = EXCLUDED.H,
-    G            = EXCLUDED.G,
-    epoch_mjd    = EXCLUDED.epoch_mjd,
-    M            = EXCLUDED.M,
-    w            = EXCLUDED.w,
-    Omega        = EXCLUDED.Omega,
-    i            = EXCLUDED.i,
-    e            = EXCLUDED.e,
-    n            = EXCLUDED.n,
-    a            = EXCLUDED.a,
-    last_updated = NOW();
-"""
-
-def dedup_by_id(rows: list[tuple]) -> list[tuple]:
-    """Keep the last tuple for each id within the batch."""
-    if not rows:
-        return rows
-    latest: dict[int, tuple] = {}
-    for r in rows:
-        latest[r[0]] = r  # r[0] = id
-    return list(latest.values())
-
-def upsert_rows(conn, rows: list[tuple]) -> int:
-    """
-    rows: (id, name, raw_line, H, G, epoch_mjd, M, w, Omega, i, e, n, a)
-    Returns number of rows attempted (after in-batch dedup).
-    """
-    if not rows:
-        return 0
-
-    values = dedup_by_id(rows)
-
-    try:
-        with conn.cursor() as cur:
-            # Fast path: executes one statement per row under the hood
-            execute_batch(cur, UPSERT_SQL_SINGLE, values, page_size=UPSERT_BATCH_SIZE)
-        conn.commit()
-        return len(values)
-
-    except psycopg2.Error as e:
-        # Extremely defensive: if something in this batch still trips ON CONFLICT
-        # semantics, fall back to true row-by-row execution.
-        conn.rollback()
-        log(f"Batch upsert failed with {e.__class__.__name__}; retrying row-by-row ...")
-        with conn.cursor() as cur:
-            for v in values:
-                cur.execute(UPSERT_SQL_SINGLE, v)
-        conn.commit()
-        return len(values)
-
-def export_to_gcs(conn, bucket_name: str, object_name: str) -> None:
-    """Export numbered-only snapshot to GCS as CSV."""
-    log(f"Exporting snapshot to gs://{bucket_name}/{object_name} ...")
-    sql = f"""
-        SELECT
-          id,
-          name,
-          H, G,
-          epoch_mjd, M, w, Omega, i, e, n, a
-        FROM {TABLE_NAME}
-        ORDER BY id
-    """
-    chunks = pd.read_sql_query(sql, conn, chunksize=EXPORT_CHUNK_ROWS)
-    tmp_path = os.path.join("/tmp", f"mpc_export_numbered_{int(time.time())}.csv")
-    first = True
-    for df in chunks:
-        df.to_csv(tmp_path, index=False, mode="w" if first else "a", header=first)
-        first = False
-    if first:  # no data
-        cols = ["id","name","H","G","epoch_mjd","M","w","Omega","i","e","n","a"]
-        pd.DataFrame(columns=cols).to_csv(tmp_path, index=False)
-
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(object_name)
-    blob.upload_from_filename(tmp_path)
-    log("GCS upload complete.")
 
 def _r2_client():
     session = boto3.session.Session()
@@ -499,16 +274,12 @@ def stream_download_and_decompress(url: str) -> t.Iterator[str]:
 # ------------------------------------------------------------------------------
 
 def main() -> None:
-    if not GCS_BUCKET_NAME:
-        raise RuntimeError("GCS_BUCKET_NAME is required")
-
     if MAX_ROWS_INGEST > 0:
         log(f"TEST MODE: will stop after {MAX_ROWS_INGEST} rows.")
 
     log("Starting MPC data fetcher (schema-compact, numbered-only)...")
 
-    conn = get_db_connection()
-    log("Connected to DB.")
+
 
     try:
         ensure_schema(conn)
@@ -553,11 +324,6 @@ def main() -> None:
             batch.clear()
 
         log(f"Ingestion complete. Total numbered rows: {total}")
-
-        if SKIP_GCS_EXPORT:
-            log("Skipping GCS CSV export (SKIP_GCS_EXPORT is set).")
-        else:
-            export_to_gcs(conn, GCS_BUCKET_NAME, GCS_OBJECT_NAME)
 
         export_json_shards_and_manifest(conn)
 
