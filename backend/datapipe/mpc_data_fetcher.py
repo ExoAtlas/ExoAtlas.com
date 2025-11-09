@@ -1,4 +1,4 @@
-# ExoAtlas asteroid catalog fetcher & publisher
+# ExoAtlas asteroid catalog → R2 uploader (no DB, no GCP)
 #
 # - Downloads MPCORB.DAT.gz from MPC
 # - Parses ONLY numbered objects
@@ -6,24 +6,25 @@
 # - Builds compact JSON shards + index manifest
 # - Uploads CSV + JSON to Cloudflare R2 (S3-compatible)
 #
-# Fields kept (CSV/JSON):
-#     id (int)          -- MPC number
-#     name (str)        -- common name without the leading "(####) "
-#     H, G (float)
-#     epoch_mjd (float) -- epoch of elements in Modified Julian Date (JD - 2400000.5)
-#     M, w, Omega, i, e, n, a (float)  [degrees for angles, a in AU, n in deg/day]
+# Fields (CSV/JSON):
+#   id (int), name (str), H, G, epoch_mjd, M, w, Omega, i, e, n, a
 #
-# Environment variables:
-#     R2_ENDPOINT                 -- e.g. "https://<accountid>.r2.cloudflarestorage.com"
-#     R2_BUCKET                   -- bucket name
-#     R2_ACCESS_KEY_ID
-#     R2_SECRET_ACCESS_KEY
-#     R2_SHARD_SIZE               -- approx objects per JSON file (default: 25000)
-#     R2_BASE_PREFIX              -- default: "asteroids/by_regime"
+# Env vars:
+#   MPCORB_URL                (default: stable MPC URL)
+#   MAX_ROWS_INGEST           (0 = all; limit for testing)
 #
-#     MPCORB_URL                  -- override MPC file URL (default stable)
-#     MAX_ROWS_INGEST             -- 0 (all) or limit for testing
-#     UPSERT_BATCH_SIZE           -- default: 1000
+#   # Cloudflare R2 (required to upload)
+#   R2_ENDPOINT               e.g. "https://<accountid>.r2.cloudflarestorage.com"
+#   R2_BUCKET                 bucket name
+#   R2_ACCESS_KEY_ID
+#   R2_SECRET_ACCESS_KEY
+#   R2_PREFIX                 (default: "asteroids/")  # folder/prefix for JSON
+#   R2_MAX_JSON_RECORDS       (default: "20000")       # objects per JSON shard
+#   R2_CSV_KEY                (default: "<R2_PREFIX>asteroid_catalog.csv")
+#
+# Notes:
+# - Memory-friendly: CSV writes incrementally; JSON shards flush at N records.
+# - No Postgres, no Google Cloud.
 
 from __future__ import annotations
 
@@ -38,49 +39,39 @@ import time
 import typing as t
 from datetime import datetime, timezone
 from pathlib import Path
-import requests
 
-# R2 (S3-compatible)
+import requests
 import boto3
 from botocore.client import Config
 
-# ------------------------------------------------------------------------------
-# Configuration
-# ------------------------------------------------------------------------------
+# ---------- Configuration ----------
+MPCORB_URL = os.getenv(
+    "MPCORB_URL",
+    "https://www.minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz",
+)
 
-# Canonical MPC URL
-MPCORB_URL = "https://www.minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
-
-# R2 (optional; if any missing, JSON upload to R2 is skipped)
+# R2
 R2_ENDPOINT = os.getenv("R2_ENDPOINT")
 R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
 R2_BUCKET = os.getenv("R2_BUCKET")
 R2_PREFIX = os.getenv("R2_PREFIX", "asteroids/")
 R2_MAX_JSON_RECORDS = int(os.getenv("R2_MAX_JSON_RECORDS", "20000"))
+R2_CSV_KEY = os.getenv("R2_CSV_KEY", f"{R2_PREFIX}asteroid_catalog.csv")
 
-# Ingestion/export tuning
-UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "1000"))
-EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "20000"))
-
-# Limit rows in test runs (0 = unlimited)
+# Limits
 MAX_ROWS_INGEST = int(os.getenv("MAX_ROWS_INGEST", "0"))
 
 REQUEST_TIMEOUT = (10, 120)  # (connect, read)
 TMP_DIR = Path("/tmp")
+TMP_DIR.mkdir(parents=True, exist_ok=True)
 
-# ------------------------------------------------------------------------------
-# Logging helpers
-# ------------------------------------------------------------------------------
-
+# ---------- Logging ----------
 def log(msg: str) -> None:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     print(f"[{now}] {msg}", flush=True)
 
-# ------------------------------------------------------------------------------
-# Parsing helpers
-# ------------------------------------------------------------------------------
-
+# ---------- Parsing helpers ----------
 def try_parse_float(s: str) -> t.Optional[float]:
     try:
         return float(s.strip())
@@ -94,7 +85,7 @@ def try_parse_int(s: str) -> t.Optional[int]:
         return None
 
 def extract_readable_designation(line: str) -> str | None:
-    """Readable designation is typically at MPCORB 0-based [166:194]."""
+    """Readable designation typically at MPCORB 0-based [166:194]."""
     if not line or len(line) < 170:
         return None
     return (line[166:194].strip() or None)
@@ -128,7 +119,6 @@ def parse_designation(readable: str | None) -> tuple[t.Optional[int], t.Optional
             nm = nm[1:].strip()
         return (mpn, nm)
 
-    # purely provisional → skip
     if _PROV_RE.match(s):
         return (None, None)
 
@@ -153,11 +143,10 @@ def is_data_line(line: str) -> bool:
         return False
     return len(s) > 40
 
-# ------------------------------------------------------------------------------
-# R2 helpers
-# ------------------------------------------------------------------------------
-
+# ---------- R2 helpers ----------
 def _r2_client():
+    if not all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET]):
+        raise RuntimeError("R2 configuration missing (endpoint, keys, or bucket).")
     session = boto3.session.Session()
     return session.client(
         service_name="s3",
@@ -175,38 +164,45 @@ def r2_upload_file(local_path: Path, key: str) -> None:
     elif key.endswith(".csv"):
         extra["ContentType"] = "text/csv; charset=utf-8"
     s3.upload_file(str(local_path), R2_BUCKET, key, ExtraArgs=extra)
+    log(f"Uploaded to r2://{R2_BUCKET}/{key}")
 
-def export_json_shards_and_manifest(conn) -> None:
-    """
-    Build compact JSON shards (numbered only) and upload to R2:
-      - {prefix}/numbered-0001.json, numbered-0002.json, ...
-      - {prefix}/index.json manifest
-    """
-    if not all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET]):
-        log("R2 env not fully set; skipping R2 shard upload.")
-        return
+# ---------- Download ----------
+def stream_download_and_decompress(url: str) -> t.Iterator[str]:
+    log(f"Downloading {url} ...")
+    with requests.get(url, stream=True, timeout=REQUEST_TIMEOUT) as resp:
+        resp.raise_for_status()
+        compressed = io.BytesIO()
+        for chunk in resp.iter_content(chunk_size=1024 * 1024):
+            if chunk:
+                compressed.write(chunk)
+        compressed.seek(0)
+    log("Decompressing stream...")
+    with gzip.GzipFile(fileobj=compressed, mode="rb") as gz:
+        for raw in gz:
+            yield raw.decode("utf-8", errors="replace")
 
-    log("Building JSON shards for R2 (numbered only) ...")
-    sql = f"""
-        SELECT
-          id,
-          name,
-          H, G,
-          epoch_mjd, M, w, Omega, i, e, n, a
-        FROM {TABLE_NAME}
-        ORDER BY id
-    """
+# ---------- Main ----------
+def main() -> None:
+    if MAX_ROWS_INGEST > 0:
+        log(f"TEST MODE: will stop after {MAX_ROWS_INGEST} numbered rows.")
 
+    # Prep CSV temp file
+    csv_tmp = TMP_DIR / f"asteroid_catalog_{int(time.time())}.csv"
+    csv_headers = ["id","name","H","G","epoch_mjd","M","w","Omega","i","e","n","a"]
+    csv_file = csv_tmp.open("w", newline="", encoding="utf-8")
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(csv_headers)
+
+    # JSON shard state
     manifest = {
         "version": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "categories": {"numbered": []},
-        "totals": {"numbered": 0}
+        "totals": {"numbered": 0},
     }
-
     shard_idx = 1
     shard_buf: list[dict] = []
 
-    def flush():
+    def flush_shard():
         nonlocal shard_idx, shard_buf
         if not shard_buf:
             return
@@ -224,70 +220,9 @@ def export_json_shards_and_manifest(conn) -> None:
         except Exception:
             pass
 
-    with conn.cursor(name="asteroid_numbered_cur") as cur:
-        cur.itersize = 10000
-        cur.execute(sql)
-        rows = 0
-        for row in cur:
-            out = {
-                "id": row[0],      # int
-                "name": row[1],    # str
-                "H": row[2], "G": row[3],
-                "epoch_mjd": row[4], "M": row[5], "w": row[6],
-                "Omega": row[7], "i": row[8], "e": row[9],
-                "n": row[10], "a": row[11],
-            }
-            shard_buf.append(out)
-            rows += 1
-            if len(shard_buf) >= R2_MAX_JSON_RECORDS:
-                flush()
-            if MAX_ROWS_INGEST and rows >= MAX_ROWS_INGEST:
-                break
-        flush()
-
-    man_key = f"{R2_PREFIX}index.json"
-    man_path = TMP_DIR / "index.json"
-    man_path.write_text(json.dumps(manifest, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    r2_upload_file(man_path, man_key)
-    log(f"R2 shard upload complete. Manifest: {man_key}")
-
-# ------------------------------------------------------------------------------
-# Download / Decompress
-# ------------------------------------------------------------------------------
-
-def stream_download_and_decompress(url: str) -> t.Iterator[str]:
-    log(f"Downloading {url} ...")
-    with requests.get(url, stream=True, timeout=REQUEST_TIMEOUT) as resp:
-        resp.raise_for_status()
-        compressed = io.BytesIO()
-        for chunk in resp.iter_content(chunk_size=1024 * 1024):
-            if chunk:
-                compressed.write(chunk)
-        compressed.seek(0)
-    log("Decompressing stream...")
-    with gzip.GzipFile(fileobj=compressed, mode="rb") as gz:
-        for raw in gz:
-            yield raw.decode("utf-8", errors="replace")
-
-# ------------------------------------------------------------------------------
-# Main
-# ------------------------------------------------------------------------------
-
-def main() -> None:
-    if MAX_ROWS_INGEST > 0:
-        log(f"TEST MODE: will stop after {MAX_ROWS_INGEST} rows.")
-
-    log("Starting MPC data fetcher (schema-compact, numbered-only)...")
-
-
+    total_numbered = 0
 
     try:
-        ensure_schema(conn)
-
-        batch: list[tuple] = []
-        total = 0
-        reached_limit = False
-
         for line in stream_download_and_decompress(MPCORB_URL):
             if not is_data_line(line):
                 continue
@@ -295,45 +230,58 @@ def main() -> None:
             readable = derive_designation_text(line)
             obj_id, obj_name = parse_designation(readable)
 
-            # ONLY ingest numbered objects
+            # ONLY numbered
             if obj_id is None or not obj_name:
                 continue
 
-            # photometry slices (rough)
+            # Photometry & elements
             H = try_parse_float(line[8:13]) if len(line) >= 13 else None
             G = try_parse_float(line[14:19]) if len(line) >= 19 else None
             elems = extract_orbital_elements(line)
 
-            batch.append((
-                obj_id, obj_name, line.rstrip("\r\n"),
-                H, G, elems["epoch_mjd"], elems["M"], elems["w"], elems["Omega"],
+            # CSV row (incremental)
+            csv_writer.writerow([
+                obj_id, obj_name, H, G,
+                elems["epoch_mjd"], elems["M"], elems["w"], elems["Omega"],
                 elems["i"], elems["e"], elems["n"], elems["a"],
-            ))
+            ])
 
-            if len(batch) >= UPSERT_BATCH_SIZE:
-                total += upsert_rows(conn, batch)
-                log(f"Upserted {total} rows...")
-                batch.clear()
+            # JSON shard buffer
+            shard_buf.append({
+                "id": obj_id,
+                "name": obj_name,
+                "H": H, "G": G,
+                "epoch_mjd": elems["epoch_mjd"], "M": elems["M"], "w": elems["w"],
+                "Omega": elems["Omega"], "i": elems["i"], "e": elems["e"],
+                "n": elems["n"], "a": elems["a"],
+            })
 
-            if MAX_ROWS_INGEST and total >= MAX_ROWS_INGEST:
-                reached_limit = True
+            total_numbered += 1
+            if len(shard_buf) >= R2_MAX_JSON_RECORDS:
+                flush_shard()
+
+            if MAX_ROWS_INGEST and total_numbered >= MAX_ROWS_INGEST:
                 break
 
-        if not reached_limit and batch:
-            total += upsert_rows(conn, batch)
-            batch.clear()
+        # Final flush
+        flush_shard()
 
-        log(f"Ingestion complete. Total numbered rows: {total}")
-
-        export_json_shards_and_manifest(conn)
-
-        conn.commit()
-        log("All done.")
     finally:
         try:
-            conn.close()
+            csv_file.close()
         except Exception:
             pass
+
+    # Upload manifest + CSV
+    man_key = f"{R2_PREFIX}index.json"
+    man_path = TMP_DIR / "index.json"
+    man_path.write_text(json.dumps(manifest, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    r2_upload_file(man_path, man_key)
+    r2_upload_file(csv_tmp, R2_CSV_KEY)
+
+    log(f"Done. Numbered rows processed: {total_numbered}")
+    log(f"Manifest: r2://{R2_BUCKET}/{man_key}")
+    log(f"CSV:      r2://{R2_BUCKET}/{R2_CSV_KEY}")
 
 if __name__ == "__main__":
     try:
