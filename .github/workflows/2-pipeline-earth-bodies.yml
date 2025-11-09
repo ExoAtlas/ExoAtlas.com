@@ -1,0 +1,50 @@
+
+name: Earth Bodies Data Update - Daily (NASA Horizons)
+
+on:
+  schedule:
+    - cron: '10 0 * * 5'
+  workflow_dispatch:
+
+permissions:
+  contents: 'read'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+  
+jobs:
+  update-major-body-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install packaging boto3 botocore requests
+
+      - name: Update R2 "Earth Bodies"
+        env:
+          # ---- Cloudflare R2 (S3-compatible) ----
+          R2_CACHE_CONTROL: public, max-age=3600, s-maxage=86400, immutable
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_JSON_KEY: earth-bodies.json
+          R2_CSV_KEY:  earth-bodies.csv
+          # ---- Output Settings ----
+          OUT_CSV_NAME: earth-bodies.csv
+          OUT_JSON_NAME: earth-bodies.json    
+        run: |
+          echo "Run UTC: $(date -u +%Y-%m-%dT%H:%M:%S%z)"
+          python ./data-pipeline/2-pipeline-earth-bodies.py
