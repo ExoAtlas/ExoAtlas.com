@@ -103,3 +103,4 @@ Nov 05, 14:27:18 UTC, tweet posted successfully | On this day in 1964, NASA laun
 Nov 06, 14:27:16 UTC, tweet posted successfully | In 1572, a supernova now known as Tycho's Supernova was first observed in the constellation Cassiopeia. It was visible in daylight for over two weeks. ✨ #Supernova #Tycho
 Nov 07, 14:26:10 UTC, tweet posted successfully | On this day in 1996, NASA launched the Mars Global Surveyor, a trailblazing mission that mapped the Red Planet in unprecedented detail. #MarsGlobalSurveyor
 Nov 08, 14:21:26 UTC, tweet posted successfully | Happy birthday to Edmond Halley (born 1656), the English astronomer who calculated the orbit of the comet that now bears his name. ☄️ #EdmondHalley
+Nov 09, 14:21:00 UTC, tweet posted successfully | Happy birthday to Carl Sagan (born 1934), the brilliant astronomer and science communicator whose work inspired millions to look up at the cosmos. 🌌 #CarlSagan
