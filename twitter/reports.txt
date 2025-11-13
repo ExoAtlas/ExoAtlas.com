@@ -107,3 +107,4 @@ Nov 09, 14:21:00 UTC, tweet posted successfully | Happy birthday to Carl Sagan (
 Nov 10, 14:27:22 UTC, tweet posted successfully | On this day in 1970, the Soviet Union launched Luna 17, which successfully deployed Lunokhod 1, the first robotic rover to explore another world. #Lunokhod1 #Moon
 Nov 11, 14:27:53 UTC, tweet posted successfully | In 1966, NASA launched Gemini 12, the final mission of the Gemini program, carrying astronauts Jim Lovell and Buzz Aldrin. Aldrin's successful spacewalks paved the way for Apollo. #Gemini12
 Nov 12, 14:28:14 UTC, tweet posted successfully | On this day in 2014, the European Space Agency's Philae lander successfully touched down on Comet 67P/Churyumov–Gerasimenko. A historic first! #Philae #Comet
+Nov 13, 14:25:50 UTC, tweet posted successfully | In 1971, Mariner 9 became the first spacecraft to orbit another planet, arriving at Mars and waiting out a global dust storm before sending back incredible images. 🔴 #Mariner9
