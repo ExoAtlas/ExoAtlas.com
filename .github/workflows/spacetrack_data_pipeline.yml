@@ -5,26 +5,23 @@ on:
     - cron: "15 07 * * *"   # 07:15 UTC daily (~12:15 AM PT)
   workflow_dispatch:
 
-env:
-  PROJECT_ID: exoatlas
-  INSTANCE_CONNECTION_NAME: exoatlas:us-central1:exoatlas-db
-
 jobs:
   fetch-and-store-data:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: 'read'
-      id-token: 'write'
+
+    # Environment shared by all steps
     env:
-      DB_HOST: 127.0.0.1
-      DB_PORT: 5432
-      GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-      GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
-      GCS_OBJECT_NAME: workflow/spacetrack_full.csv
-      # knobs
-      EXPORT_CHUNK_ROWS: "50000"
-      UPSERT_BATCH_SIZE: "2000"
+      # Cloudflare R2 (private bucket)
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_PRIVATE_BUCKET_NAME: ${{ secrets.R2_BUCKET_PRIVATE }}
+      # Optional: override object names (otherwise script defaults apply)
+      # R2_CSV_OBJECT_NAME: spacetrack_catalog.csv
+      # R2_JSON_OBJECT_NAME: spacetrack_catalog.json
 
     steps:
       - name: Checkout repository
@@ -38,59 +35,11 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install packaging google-cloud-storage google-api-core psycopg2-binary boto3 botocore requests pandas 
+          pip install boto3 requests  
 
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: 'projects/566178654810/locations/global/workloadIdentityPools/github-pool/providers/exoatlas'
-          service_account: 'exoatlas-github-mpc-worker@exoatlas.iam.gserviceaccount.com'
-          create_credentials_file: true
-          export_environment_variables: true
-
-      - name: Download Cloud SQL Auth Proxy v2
-        env:
-          PROXY_VERSION: v2.18.1   # keep this pinned intentionally
-        run: |
-          wget -q https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${PROXY_VERSION}/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
-          chmod +x cloud-sql-proxy
-
-      - name: Start Cloud SQL Proxy
-        env:
-          INSTANCE_CONNECTION_NAME: ${{ env.INSTANCE_CONNECTION_NAME }}
-        run: |
-          set -euo pipefail
-          ./cloud-sql-proxy --port 5432 "$INSTANCE_CONNECTION_NAME" > proxy.log 2>&1 &
-          for i in {1..30}; do
-            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break
-            sleep 1
-          done
-          (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 || { echo "Proxy failed to start"; tail -n +1 proxy.log; exit 1; }
-    
-      - name: Install psql client
-        run: |
-          sudo apt-get update -y && sudo apt-get install -y postgresql-client
-
-      - name: Test DB connection
-        env:
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: |
-          psql "host=127.0.0.1 port=5432 user=${{ secrets.DB_USER }} dbname=${{ secrets.DB_NAME }} sslmode=disable" -c "select now();"
-
-      - name: Run ingestion
+      - name: Run Space-track.org Data Ingestion
         env:
           ST_USERNAME: ${{ secrets.ST_USERNAME }}
           ST_PASSWORD: ${{ secrets.ST_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASS: ${{ secrets.DB_PASSWORD }}
         run: |
           python backend/datapipe/spacetrack_data_fetcher.py
-
-      # Optional: surface proxy logs if the job fails later
-      - name: Show proxy logs (on failure)
-        if: failure()
-        run: |
-          echo "==== cloud-sql-proxy logs ===="
-          cat proxy.log || true
