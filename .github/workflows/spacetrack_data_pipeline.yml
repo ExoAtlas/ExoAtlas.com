@@ -42,4 +42,4 @@ jobs:
           ST_USERNAME: ${{ secrets.ST_USERNAME }}
           ST_PASSWORD: ${{ secrets.ST_PASSWORD }}
         run: |
-          python backend/datapipe/spacetrack_data_fetcher.py
+          python data-pipeline/spacetrack_data_fetcher.py
