@@ -1,50 +1,41 @@
 """
-Daily Space-Track GP (TLE) data fetcher & loader.
+Daily Space-Track GP (TLE) data fetcher & CSV/JSON uploader to Cloudflare R2.
 
 What this script does
 ---------------------
 1) Logs into Space-Track and pulls newest GP elset per object (class/gp).
-2) Ingests rows into Postgres via Cloud SQL Auth Proxy on localhost:5432.
-   - Upsert by (norad_cat_id, epoch).
-   - Stores both OMM-style fields and raw TLE lines.
-3) Exports a full-table CSV snapshot to GCS for downstream consumption.
+2) Writes a CSV and JSON snapshot of all rows to /tmp.
+3) Uploads both files to a Cloudflare R2 bucket (S3-compatible).
 
 Environment variables expected
 ------------------------------
-DB_HOST                default 127.0.0.1 (Cloud SQL Auth Proxy local listener)
-DB_PORT                default 5432
-DB_USER                (required)
-DB_PASSWORD            (preferred) or DB_PASS (legacy fallback)
-DB_NAME                (required)
-
 ST_USERNAME            (required)  Space-Track login
 ST_PASSWORD            (required)
 
-GCS_BUCKET_NAME        (required)
-GCS_OBJECT_NAME        optional    default workflow/spacetrack_full.csv
+R2_ENDPOINT            (required)
+R2_ACCESS_KEY_ID       (required)
+R2_SECRET_ACCESS_KEY   (required)
+R2_PRIVATE_BUCKET_NAME         (required)
+R2_CSV_OBJECT_NAME     optional    default workflow/spacetrack_full.csv
+R2_JSON_OBJECT_NAME    optional    default workflow/spacetrack_full.json
 
 Optional knobs
 --------------
-UPSERT_BATCH_SIZE      default 2000
-EXPORT_CHUNK_ROWS      default 50000
-SKIP_GCS_EXPORT        if "1"/"true"/"yes", skip exporting CSV
 REQUEST_TIMEOUT        connect/read timeout tuple (fixed in code)
 """
 
 from __future__ import annotations
 
 import os
+import csv
 import json
 import time
 import random
-import typing as t
 from datetime import datetime, timezone
+from typing import List, Dict
 
 import requests
-import psycopg2
-from psycopg2.extras import execute_batch
-import pandas as pd
-from google.cloud import storage
+import boto3
 
 # ---------------------- Configuration ----------------------
 
@@ -52,25 +43,18 @@ BASE = "https://www.space-track.org"
 S = requests.Session()
 REQUEST_TIMEOUT = (10, 120)  # (connect, read) seconds
 
-# DB (mirror MPC fetcher style; proxy handles TLS → sslmode=disable)
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD") or os.getenv("DB_PASS")
-DB_NAME = os.getenv("DB_NAME")
-
 # Space-Track creds
 SPACE_TRACK_USER = os.getenv("ST_USERNAME")
 SPACE_TRACK_PASS = os.getenv("ST_PASSWORD")
 
-# GCS export
-GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
-GCS_OBJECT_NAME = os.getenv("GCS_OBJECT_NAME", "workflow/spacetrack_full.csv")
+# Cloudflare R2 (S3-compatible) config
+R2_ENDPOINT = os.getenv("R2_ENDPOINT")
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+R2_PRIVATE_BUCKET_NAME = os.getenv("R2_PRIVATE_BUCKET_NAME")
+R2_CSV_OBJECT_NAME = os.getenv("R2_CSV_OBJECT_NAME", "spacetrack_catalog.csv")
+R2_JSON_OBJECT_NAME = os.getenv("R2_JSON_OBJECT_NAME", "spacetrack_catalog.json")
 
-# Batch/perf knobs
-UPSERT_BATCH_SIZE = int(os.getenv("UPSERT_BATCH_SIZE", "2000"))
-EXPORT_CHUNK_ROWS = int(os.getenv("EXPORT_CHUNK_ROWS", "50000"))
-SKIP_GCS_EXPORT = os.getenv("SKIP_GCS_EXPORT", "").lower() in {"1", "true", "yes"}
 
 # ---------------------- Helpers ----------------------------
 
@@ -78,17 +62,23 @@ def log(msg: str) -> None:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     print(f"[{now}] {msg}", flush=True)
 
+
 def _assert_required_env() -> None:
     missing = []
-    for k in ["DB_USER", "DB_NAME", "ST_USERNAME", "ST_PASSWORD"]:
+    for k in [
+        "ST_USERNAME",
+        "ST_PASSWORD",
+        "R2_ENDPOINT",
+        "R2_ACCESS_KEY_ID",
+        "R2_SECRET_ACCESS_KEY",
+        "R2_PRIVATE_BUCKET_NAME",
+    ]:
         if not os.getenv(k):
             missing.append(k)
-    if not DB_PASSWORD:
-        missing.append("DB_PASSWORD (or legacy DB_PASS)")
-    if not GCS_BUCKET_NAME:
-        missing.append("GCS_BUCKET_NAME")
+
     if missing:
         raise SystemExit(f"Missing required environment variable(s): {', '.join(missing)}")
+
 
 def _safe_get(url: str, max_attempts: int = 5) -> requests.Response:
     for attempt in range(max_attempts):
@@ -102,6 +92,7 @@ def _safe_get(url: str, max_attempts: int = 5) -> requests.Response:
         return r
     raise RuntimeError(f"Failed GET after {max_attempts} attempts: {url}")
 
+
 # ---------------------- Space-Track ------------------------
 
 def st_login() -> None:
@@ -113,7 +104,8 @@ def st_login() -> None:
     )
     r.raise_for_status()
 
-def fetch_gp_chunk(norad_min: int, norad_max: int) -> list[dict]:
+
+def fetch_gp_chunk(norad_min: int, norad_max: int) -> List[Dict]:
     """Newest elset per object in a NORAD range, JSON (includes TLE_LINE1/2)."""
     url = (
         f"{BASE}/basicspacedata/query/class/gp/"
@@ -123,14 +115,15 @@ def fetch_gp_chunk(norad_min: int, norad_max: int) -> list[dict]:
     r = _safe_get(url)
     return r.json()
 
-def fetch_gp_all() -> list[dict]:
+
+def fetch_gp_all() -> List[Dict]:
     ranges = [
         (1, 99999),
         (100000, 199999),
         (200000, 299999),
         (300000, 399999),  # future-proof
     ]
-    out: list[dict] = []
+    out: List[Dict] = []
     for a, b in ranges:
         log(f"Fetching GP range {a}–{b}…")
         out.extend(fetch_gp_chunk(a, b))
@@ -138,133 +131,129 @@ def fetch_gp_all() -> list[dict]:
     log(f"Fetched {len(out)} records from Space-Track.")
     return out
 
-# ---------------------- Database ---------------------------
 
-def get_db_connection():
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dbname=DB_NAME,
-        sslmode="disable",            # via Cloud SQL Auth Proxy (mTLS)
-        connect_timeout=20,
-        application_name="spacetrack_data_fetcher",
+# ---------------------- Local export -----------------------
+
+FIELDNAMES = [
+    "NORAD_CAT_ID",
+    "OBJECT_NAME",
+    "OBJECT_ID",
+    "EPOCH",
+    "MEAN_MOTION",
+    "ECCENTRICITY",
+    "INCLINATION",
+    "RA_OF_ASC_NODE",
+    "ARG_OF_PERICENTER",
+    "MEAN_ANOMALY",
+    "BSTAR",
+    "TLE_LINE0",
+    "TLE_LINE1",
+    "TLE_LINE2",
+    "CREATION_DATE",
+    "GP_ID",
+]
+
+
+def write_rows_to_csv(rows: List[Dict], path: str) -> None:
+    """
+    Write rows to CSV. Columns mirror what used to be stored in gp_catalog.
+    """
+    log(f"Writing {len(rows)} rows to CSV at {path}…")
+    with open(path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({
+                "NORAD_CAT_ID": row.get("NORAD_CAT_ID"),
+                "OBJECT_NAME": row.get("OBJECT_NAME"),
+                "OBJECT_ID": row.get("OBJECT_ID"),
+                "EPOCH": row.get("EPOCH"),
+                "MEAN_MOTION": row.get("MEAN_MOTION"),
+                "ECCENTRICITY": row.get("ECCENTRICITY"),
+                "INCLINATION": row.get("INCLINATION"),
+                "RA_OF_ASC_NODE": row.get("RA_OF_ASC_NODE"),
+                "ARG_OF_PERICENTER": row.get("ARG_OF_PERICENTER"),
+                "MEAN_ANOMALY": row.get("MEAN_ANOMALY"),
+                "BSTAR": row.get("BSTAR"),
+                "TLE_LINE0": row.get("TLE_LINE0"),
+                "TLE_LINE1": row.get("TLE_LINE1"),
+                "TLE_LINE2": row.get("TLE_LINE2"),
+                "CREATION_DATE": row.get("CREATION_DATE"),
+                "GP_ID": row.get("GP_ID"),
+            })
+
+
+def write_rows_to_json(rows: List[Dict], path: str) -> None:
+    """
+    Write rows to JSON (list of objects with the same fields as the CSV).
+    """
+    log(f"Writing {len(rows)} rows to JSON at {path}…")
+
+    # Normalize to only the expected fields to keep JSON tight and consistent.
+    normalized = []
+    for row in rows:
+        normalized.append({
+            "NORAD_CAT_ID": row.get("NORAD_CAT_ID"),
+            "OBJECT_NAME": row.get("OBJECT_NAME"),
+            "OBJECT_ID": row.get("OBJECT_ID"),
+            "EPOCH": row.get("EPOCH"),
+            "MEAN_MOTION": row.get("MEAN_MOTION"),
+            "ECCENTRICITY": row.get("ECCENTRICITY"),
+            "INCLINATION": row.get("INCLINATION"),
+            "RA_OF_ASC_NODE": row.get("RA_OF_ASC_NODE"),
+            "ARG_OF_PERICENTER": row.get("ARG_OF_PERICENTER"),
+            "MEAN_ANOMALY": row.get("MEAN_ANOMALY"),
+            "BSTAR": row.get("BSTAR"),
+            "TLE_LINE0": row.get("TLE_LINE0"),
+            "TLE_LINE1": row.get("TLE_LINE1"),
+            "TLE_LINE2": row.get("TLE_LINE2"),
+            "CREATION_DATE": row.get("CREATION_DATE"),
+            "GP_ID": row.get("GP_ID"),
+        })
+
+    with open(path, "w") as f:
+        json.dump(normalized, f, separators=(",", ":"), ensure_ascii=False)
+
+
+# ---------------------- R2 Upload --------------------------
+
+def get_r2_client():
+    session = boto3.session.Session()
+    return session.client(
+        "s3",
+        endpoint_url=R2_ENDPOINT,
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
     )
-    conn.autocommit = False
-    return conn
 
-def ensure_tables(conn) -> None:
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS gp_catalog (
-              norad_cat_id      INT NOT NULL,
-              object_name       TEXT,
-              object_id         TEXT,               -- e.g., 1998-067A
-              epoch             TIMESTAMPTZ,
-              mean_motion       DOUBLE PRECISION,
-              eccentricity      DOUBLE PRECISION,
-              inclination       DOUBLE PRECISION,
-              ra_of_asc_node    DOUBLE PRECISION,
-              arg_of_pericenter DOUBLE PRECISION,
-              mean_anomaly      DOUBLE PRECISION,
-              bstar             DOUBLE PRECISION,
-              tle_line0         TEXT,
-              tle_line1         TEXT,
-              tle_line2         TEXT,
-              creation_date     TIMESTAMPTZ,
-              gp_id             INT,
-              inserted_at       TIMESTAMPTZ DEFAULT NOW(),
-              PRIMARY KEY (norad_cat_id, epoch)
-            );
-            CREATE INDEX IF NOT EXISTS gp_epoch_idx ON gp_catalog(epoch DESC);
-            """
+
+def upload_to_r2(local_path: str, object_name: str, content_type: str) -> None:
+    log(f"Uploading {local_path} to R2 bucket '{R2_PRIVATE_BUCKET_NAME}' as '{object_name}'…")
+    s3 = get_r2_client()
+
+    with open(local_path, "rb") as f:
+        s3.upload_fileobj(
+            f,
+            R2_PRIVATE_BUCKET_NAME,
+            object_name,
+            ExtraArgs={"ContentType": content_type},
         )
-    conn.commit()
 
-def upsert_gp(conn, rows: list[dict]) -> int:
-    if not rows:
-        return 0
-    sql = """
-    INSERT INTO gp_catalog
-      (norad_cat_id, object_name, object_id, epoch, mean_motion, eccentricity,
-       inclination, ra_of_asc_node, arg_of_pericenter, mean_anomaly, bstar,
-       tle_line0, tle_line1, tle_line2, creation_date, gp_id)
-    VALUES
-      (%(NORAD_CAT_ID)s, %(OBJECT_NAME)s, %(OBJECT_ID)s, %(EPOCH)s, %(MEAN_MOTION)s, %(ECCENTRICITY)s,
-       %(INCLINATION)s, %(RA_OF_ASC_NODE)s, %(ARG_OF_PERICENTER)s, %(MEAN_ANOMALY)s, %(BSTAR)s,
-       %(TLE_LINE0)s, %(TLE_LINE1)s, %(TLE_LINE2)s, %(CREATION_DATE)s, %(GP_ID)s)
-    ON CONFLICT (norad_cat_id, epoch) DO UPDATE
-      SET object_name       = EXCLUDED.object_name,
-          object_id         = EXCLUDED.object_id,
-          mean_motion       = EXCLUDED.mean_motion,
-          eccentricity      = EXCLUDED.eccentricity,
-          inclination       = EXCLUDED.inclination,
-          ra_of_asc_node    = EXCLUDED.ra_of_asc_node,
-          arg_of_pericenter = EXCLUDED.arg_of_pericenter,
-          mean_anomaly      = EXCLUDED.mean_anomaly,
-          bstar             = EXCLUDED.bstar,
-          tle_line0         = EXCLUDED.tle_line0,
-          tle_line1         = EXCLUDED.tle_line1,
-          tle_line2         = EXCLUDED.tle_line2,
-          creation_date     = EXCLUDED.creation_date;
-    """
-    total = 0
-    with conn.cursor() as cur:
-        # batch insert/upsert
-        for i in range(0, len(rows), UPSERT_BATCH_SIZE):
-            batch = rows[i : i + UPSERT_BATCH_SIZE]
-            execute_batch(cur, sql, batch, page_size=len(batch))
-            total += len(batch)
-    conn.commit()
-    return total
+    log(f"R2 upload complete for {object_name}.")
 
-def export_full_csv(conn, bucket_name: str, object_name: str) -> None:
-    """Export the full gp_catalog table to GCS as CSV (chunked), like MPC."""
-    log(f"Exporting snapshot to gs://{bucket_name}/{object_name} …")
-    sql = """
-        SELECT
-          norad_cat_id, object_name, object_id, epoch,
-          mean_motion, eccentricity, inclination,
-          ra_of_asc_node, arg_of_pericenter, mean_anomaly, bstar,
-          tle_line0, tle_line1, tle_line2, creation_date, gp_id
-        FROM gp_catalog
-        ORDER BY norad_cat_id, epoch
-    """
-    chunks = pd.read_sql_query(sql, conn, chunksize=EXPORT_CHUNK_ROWS)
-    tmp_path = os.path.join("/tmp", f"spacetrack_export_{int(time.time())}.csv")
-    first = True
-    for df in chunks:
-        df.to_csv(tmp_path, index=False, mode="w" if first else "a", header=first)
-        first = False
-    if first:
-        # no rows case
-        cols = [
-            "norad_cat_id","object_name","object_id","epoch",
-            "mean_motion","eccentricity","inclination",
-            "ra_of_asc_node","arg_of_pericenter","mean_anomaly","bstar",
-            "tle_line0","tle_line1","tle_line2","creation_date","gp_id",
-        ]
-        pd.DataFrame(columns=cols).to_csv(tmp_path, index=False)
-
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(object_name)
-    blob.upload_from_filename(tmp_path)
-    log("GCS upload complete.")
 
 # ---------------------- Main -------------------------------
 
 def main() -> None:
     _assert_required_env()
-    log("Starting Space-Track data fetcher…")
+    log("Starting Space-Track data fetcher (R2 CSV + JSON)…")
     st_login()
 
     raw = fetch_gp_all()
 
-    # Trim to exactly what we store; skip incomplete rows just in case
-    rows: list[dict] = []
+    # Trim to exactly what we export; skip incomplete rows just in case
+    rows: List[Dict] = []
     for d in raw:
         if not (d.get("NORAD_CAT_ID") and d.get("EPOCH") and d.get("TLE_LINE1") and d.get("TLE_LINE2")):
             continue
@@ -287,25 +276,20 @@ def main() -> None:
             "GP_ID": d.get("GP_ID"),
         })
 
-    conn = get_db_connection()
-    log("Connected to DB.")
-    try:
-        ensure_tables(conn)
-        n = upsert_gp(conn, rows)
-        log(f"Ingested {n} rows into gp_catalog.")
+    log(f"Prepared {len(rows)} cleaned rows for CSV/JSON export.")
 
-        if SKIP_GCS_EXPORT:
-            log("Skipping GCS export (SKIP_GCS_EXPORT is set).")
-        else:
-            export_full_csv(conn, GCS_BUCKET_NAME, GCS_OBJECT_NAME)
+    ts = int(time.time())
+    csv_path = os.path.join("/tmp", f"spacetrack_export_{ts}.csv")
+    json_path = os.path.join("/tmp", f"spacetrack_export_{ts}.json")
 
-        conn.commit()
-        log("All done.")
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+    write_rows_to_csv(rows, csv_path)
+    write_rows_to_json(rows, json_path)
+
+    upload_to_r2(csv_path, R2_CSV_OBJECT_NAME, "text/csv")
+    upload_to_r2(json_path, R2_JSON_OBJECT_NAME, "application/json")
+
+    log("All done.")
+
 
 if __name__ == "__main__":
     try:
