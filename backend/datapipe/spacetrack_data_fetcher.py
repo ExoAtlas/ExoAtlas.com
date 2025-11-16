@@ -229,13 +229,13 @@ def get_r2_client():
 
 
 def upload_to_r2(local_path: str, object_name: str, content_type: str) -> None:
-    log(f"Uploading {local_path} to R2 bucket '{R2_PRIVATE_BUCKET_NAME}' as '{object_name}'…")
+    log(f"Uploading {local_path} to R2 bucket '{R2_BUCKET_PRIVATE}' as '{object_name}'…")
     s3 = get_r2_client()
 
     with open(local_path, "rb") as f:
         s3.upload_fileobj(
             f,
-            R2_PRIVATE_BUCKET_NAME,
+            R2_BUCKET_PRIVATE,
             object_name,
             ExtraArgs={"ContentType": content_type},
         )
