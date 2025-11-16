@@ -13,9 +13,9 @@ ST_USERNAME            (required)  Space-Track login
 ST_PASSWORD            (required)
 
 R2_ENDPOINT            (required)
-R2_ACCESS_KEY_ID       (required)
-R2_SECRET_ACCESS_KEY   (required)
-R2_PRIVATE_BUCKET_NAME         (required)
+R2_BUCKET_PRIVATE            (required)
+R2_ACCESS_KEY_ID_PRIVATE     (required)
+R2_SECRET_ACCESS_KEY_PRIVATE (required)
 R2_CSV_OBJECT_NAME     optional    default workflow/spacetrack_full.csv
 R2_JSON_OBJECT_NAME    optional    default workflow/spacetrack_full.json
 
@@ -49,9 +49,9 @@ SPACE_TRACK_PASS = os.getenv("ST_PASSWORD")
 
 # Cloudflare R2 (S3-compatible) config
 R2_ENDPOINT = os.getenv("R2_ENDPOINT")
-R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
-R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
-R2_PRIVATE_BUCKET_NAME = os.getenv("R2_PRIVATE_BUCKET_NAME")
+R2_ACCESS_KEY_ID_PRIVATE = os.getenv("R2_ACCESS_KEY_ID_PRIVATE")
+R2_SECRET_ACCESS_KEY_PRIVATE = os.getenv("R2_SECRET_ACCESS_KEY_PRIVATE")
+R2_BUCKET_PRIVATE = os.getenv("R2_BUCKET_PRIVATE")
 R2_CSV_OBJECT_NAME = os.getenv("R2_CSV_OBJECT_NAME", "spacetrack_catalog.csv")
 R2_JSON_OBJECT_NAME = os.getenv("R2_JSON_OBJECT_NAME", "spacetrack_catalog.json")
 
@@ -69,9 +69,9 @@ def _assert_required_env() -> None:
         "ST_USERNAME",
         "ST_PASSWORD",
         "R2_ENDPOINT",
-        "R2_ACCESS_KEY_ID",
-        "R2_SECRET_ACCESS_KEY",
-        "R2_PRIVATE_BUCKET_NAME",
+        "R2_ACCESS_KEY_ID_PRIVATE",
+        "R2_SECRET_ACCESS_KEY_PRIVATE",
+        "R2_BUCKET_PRIVATE",
     ]:
         if not os.getenv(k):
             missing.append(k)
@@ -222,8 +222,8 @@ def get_r2_client():
     return session.client(
         "s3",
         endpoint_url=R2_ENDPOINT,
-        aws_access_key_id=R2_ACCESS_KEY_ID,
-        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        aws_access_key_id=R2_ACCESS_KEY_ID_PRIVATE,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY_PRIVATE,
         region_name="auto",
     )
 
