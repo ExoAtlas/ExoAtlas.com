@@ -113,3 +113,4 @@ Nov 15, 14:22:34 UTC, tweet posted successfully | In 1988, the Soviet Union cond
 Nov 16, 14:22:19 UTC, tweet posted successfully | On this day in 1974, the Arecibo Message, a coded message to potential extraterrestrials, was broadcast from the Arecibo radio telescope toward the M13 star cluster. #AreciboMessage #SETI
 Nov 17, 14:27:42 UTC, tweet posted successfully | The Leonid meteor shower, famous for its spectacular storms, peaks tonight! Look for fast-moving meteors associated with Comet Tempel-Tuttle. 🌠 #Leonids
 Nov 18, 14:28:07 UTC, tweet posted successfully | In 1989, NASA's Cosmic Background Explorer (COBE) satellite was launched to measure the faint glow of the Big Bang, providing crucial evidence for the theory. #COBE
+Nov 19, 14:27:59 UTC, tweet posted successfully | On this day in 1969, Apollo 12 astronauts Pete Conrad and Alan Bean landed on the Moon's Ocean of Storms. #Apollo12 #MoonLanding
