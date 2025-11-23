@@ -117,3 +117,4 @@ Nov 19, 14:27:59 UTC, tweet posted successfully | On this day in 1969, Apollo 12
 Nov 20, 14:27:26 UTC, tweet posted successfully | In 1998, Russia launched the Zarya module, the first component of the International Space Station, from Baikonur Cosmodrome. 🛰️ #ISS
 Nov 21, 14:26:26 UTC, tweet posted successfully | Today in 2015, a Blue Origin New Shepard rocket became the first to fly to space and return for a powered, vertical landing, a key step in rocket reusability. #BlueOrigin
 Nov 22, 14:22:30 UTC, tweet posted successfully | Happy birthday to Guion Bluford (born 1942), the first African American to travel to space, flying on four Space Shuttle missions. 🧑‍🚀 #GuionBluford
+Nov 23, 14:22:40 UTC, tweet posted successfully | Today in 1977, the Meteosat 1 satellite was launched, the first of a long and successful series of European weather satellites. 🌍 #Meteosat
