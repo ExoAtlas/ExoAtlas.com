@@ -120,3 +120,4 @@ Nov 22, 14:22:30 UTC, tweet posted successfully | Happy birthday to Guion Blufor
 Nov 23, 14:22:40 UTC, tweet posted successfully | Today in 1977, the Meteosat 1 satellite was launched, the first of a long and successful series of European weather satellites. 🌍 #Meteosat
 Nov 24, 14:28:41 UTC, tweet posted successfully | On this day in 1969, the Apollo 12 crew successfully splashed down in the Pacific Ocean, concluding the second human mission to the Moon. #Apollo12
 Nov 25, 14:28:22 UTC, tweet posted successfully | In 1915, Albert Einstein first presented his field equations of general relativity, fundamentally changing our understanding of gravity, space, and time. #Einstein
+Nov 26, 14:28:41 UTC, tweet posted successfully | On this day in 2011, the Mars Science Laboratory mission was launched, carrying the Curiosity rover to explore Gale Crater on Mars. #CuriosityRover #Mars
