@@ -123,3 +123,4 @@ Nov 25, 14:28:22 UTC, tweet posted successfully | In 1915, Albert Einstein first
 Nov 26, 14:28:41 UTC, tweet posted successfully | On this day in 2011, the Mars Science Laboratory mission was launched, carrying the Curiosity rover to explore Gale Crater on Mars. #CuriosityRover #Mars
 Nov 27, 14:27:40 UTC, tweet posted successfully | In 1971, the Soviet Mars 2 probe reached Mars. Its lander malfunctioned and crashed, but it became the first human-made object to impact the Martian surface. #Mars2
 Nov 28, 14:27:03 UTC, tweet posted successfully | On this day in 1964, NASA launched the Mariner 4 spacecraft on the first successful flyby mission to Mars. #Mariner4 #Mars
+Nov 29, 14:23:56 UTC, tweet posted successfully | In 1961, the Mercury-Atlas 5 mission launched, carrying the chimpanzee Enos on a two-orbit flight, a final test before the first crewed U.S. orbital mission. 🐒 #ProjectMercury
