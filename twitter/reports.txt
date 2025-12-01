@@ -125,3 +125,4 @@ Nov 27, 14:27:40 UTC, tweet posted successfully | In 1971, the Soviet Mars 2 pro
 Nov 28, 14:27:03 UTC, tweet posted successfully | On this day in 1964, NASA launched the Mariner 4 spacecraft on the first successful flyby mission to Mars. #Mariner4 #Mars
 Nov 29, 14:23:56 UTC, tweet posted successfully | In 1961, the Mercury-Atlas 5 mission launched, carrying the chimpanzee Enos on a two-orbit flight, a final test before the first crewed U.S. orbital mission. 🐒 #ProjectMercury
 Nov 30, 14:23:47 UTC, tweet posted successfully | On this day in 1954, a meteorite crashed through the roof of a house in Sylacauga, Alabama, striking Ann Hodges in the only confirmed case of a person being hit by a meteorite. ☄️ #Meteorite
+Dec 01, 14:30:18 UTC, tweet posted successfully | On this day in 2020, the iconic Arecibo radio telescope's instrument platform tragically collapsed, ending 57 years of astronomical discoveries. #Arecibo
