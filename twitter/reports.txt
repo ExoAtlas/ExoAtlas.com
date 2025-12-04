@@ -128,3 +128,4 @@ Nov 30, 14:23:47 UTC, tweet posted successfully | On this day in 1954, a meteori
 Dec 01, 14:30:18 UTC, tweet posted successfully | On this day in 2020, the iconic Arecibo radio telescope's instrument platform tragically collapsed, ending 57 years of astronomical discoveries. #Arecibo
 Dec 02, 14:30:47 UTC, tweet posted successfully | In 1995, the Solar and Heliospheric Observatory (SOHO), a joint NASA/ESA mission, was launched to study the Sun from its core to its outer corona. ☀️ #SOHO #Sun
 Dec 03, 14:29:59 UTC, tweet posted successfully | On this day in 1973, Pioneer 10 performed the first-ever flyby of Jupiter, capturing the first close-up images of the giant planet. #Pioneer10 #Jupiter
+Dec 04, 14:29:43 UTC, tweet posted successfully | In 1998, the Space Shuttle Endeavour launched on mission STS-88, carrying Unity, the first American-built module for the International Space Station. #ISS
