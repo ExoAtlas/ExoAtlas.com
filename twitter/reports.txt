@@ -130,3 +130,4 @@ Dec 02, 14:30:47 UTC, tweet posted successfully | In 1995, the Solar and Heliosp
 Dec 03, 14:29:59 UTC, tweet posted successfully | On this day in 1973, Pioneer 10 performed the first-ever flyby of Jupiter, capturing the first close-up images of the giant planet. #Pioneer10 #Jupiter
 Dec 04, 14:29:43 UTC, tweet posted successfully | In 1998, the Space Shuttle Endeavour launched on mission STS-88, carrying Unity, the first American-built module for the International Space Station. #ISS
 Dec 05, 14:28:50 UTC, tweet posted successfully | Happy birthday to Werner Heisenberg (born 1901), the Nobel Prize-winning physicist and a key pioneer of quantum mechanics. #Physics
+Dec 06, 14:23:35 UTC, tweet posted successfully | On this day in 1957, the United States' first attempt to launch a satellite, Vanguard TV3, failed spectacularly on the launchpad just seconds after liftoff. #Vanguard #SpaceRace
