@@ -131,3 +131,4 @@ Dec 03, 14:29:59 UTC, tweet posted successfully | On this day in 1973, Pioneer 1
 Dec 04, 14:29:43 UTC, tweet posted successfully | In 1998, the Space Shuttle Endeavour launched on mission STS-88, carrying Unity, the first American-built module for the International Space Station. #ISS
 Dec 05, 14:28:50 UTC, tweet posted successfully | Happy birthday to Werner Heisenberg (born 1901), the Nobel Prize-winning physicist and a key pioneer of quantum mechanics. #Physics
 Dec 06, 14:23:35 UTC, tweet posted successfully | On this day in 1957, the United States' first attempt to launch a satellite, Vanguard TV3, failed spectacularly on the launchpad just seconds after liftoff. #Vanguard #SpaceRace
+Dec 07, 14:23:42 UTC, tweet posted successfully | In 1972, Apollo 17 launched on the final mission of the Apollo program. It was the only night launch of a Saturn V and carried the only geologist to walk on the Moon. 🚀 #Apollo17
