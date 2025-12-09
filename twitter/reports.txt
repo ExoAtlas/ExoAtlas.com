@@ -133,3 +133,4 @@ Dec 05, 14:28:50 UTC, tweet posted successfully | Happy birthday to Werner Heise
 Dec 06, 14:23:35 UTC, tweet posted successfully | On this day in 1957, the United States' first attempt to launch a satellite, Vanguard TV3, failed spectacularly on the launchpad just seconds after liftoff. #Vanguard #SpaceRace
 Dec 07, 14:23:42 UTC, tweet posted successfully | In 1972, Apollo 17 launched on the final mission of the Apollo program. It was the only night launch of a Saturn V and carried the only geologist to walk on the Moon. 🚀 #Apollo17
 Dec 08, 14:30:45 UTC, tweet posted successfully | On this day in 2010, SpaceX's Dragon C1 became the first privately built and operated spacecraft to be successfully launched into orbit and recovered. #SpaceX #Dragon
+Dec 09, 14:30:22 UTC, tweet posted successfully | In 1978, the Pioneer Venus 2 mission's probes entered the atmosphere of Venus, returning data on its composition and structure. #PioneerVenus
