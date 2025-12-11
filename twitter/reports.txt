@@ -135,3 +135,4 @@ Dec 07, 14:23:42 UTC, tweet posted successfully | In 1972, Apollo 17 launched on
 Dec 08, 14:30:45 UTC, tweet posted successfully | On this day in 2010, SpaceX's Dragon C1 became the first privately built and operated spacecraft to be successfully launched into orbit and recovered. #SpaceX #Dragon
 Dec 09, 14:30:22 UTC, tweet posted successfully | In 1978, the Pioneer Venus 2 mission's probes entered the atmosphere of Venus, returning data on its composition and structure. #PioneerVenus
 Dec 10, 14:30:52 UTC, tweet posted successfully | Happy birthday to Ada Lovelace (born 1815), the mathematician and writer often regarded as the first computer programmer. Her work is foundational to the software that runs space missions. 💻 #WomenInSTEM
+Dec 11, 14:29:12 UTC, tweet posted successfully | On this day in 1972, Apollo 17 astronauts Gene Cernan and Harrison Schmitt landed in the Taurus-Littrow valley, beginning the final human exploration of the Moon. 🌕 #Apollo17
