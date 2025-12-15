@@ -139,3 +139,4 @@ Dec 11, 14:29:12 UTC, tweet posted successfully | On this day in 1972, Apollo 17
 Dec 12, 14:25:47 UTC, tweet posted successfully | In 1961, OSCAR 1, the first satellite built by amateur radio enthusiasts, was launched. It was the world's first non-governmental satellite. #HamRadio #OSCAR1
 Dec 13, 14:24:46 UTC, tweet posted successfully | The Geminid meteor shower, one of the most spectacular of the year, peaks tonight! The meteors are debris from the asteroid 3200 Phaethon. 🌠 #Geminids
 Dec 14, 14:25:00 UTC, tweet posted successfully | On this day in 1962, the Mariner 2 spacecraft flew by Venus, becoming the first successful planetary encounter. On this day in 1972, Gene Cernan became the last person to walk on the Moon. #Mariner2 #Apollo17
+Dec 15, 14:34:16 UTC, tweet posted successfully | In 1970, the Soviet Venera 7 probe became the first spacecraft to successfully soft-land on another planet (Venus) and transmit data from the surface. #Venera7
