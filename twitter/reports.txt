@@ -146,3 +146,4 @@ Dec 18, 14:30:43 UTC, tweet posted successfully | In 1958, the United States lau
 Dec 19, 14:29:14 UTC, tweet posted successfully | On this day in 1972, the crew of Apollo 17 splashed down safely in the Pacific Ocean, concluding the final mission of the Apollo lunar program. #Apollo17
 Dec 20, 14:25:03 UTC, tweet posted successfully | In 2019, the United States Space Force was founded as a new branch of the Armed Forces. #SpaceForce
 Dec 21, 14:25:12 UTC, tweet posted successfully | On this day in 1968, Apollo 8 launched, becoming the first crewed mission to leave Earth orbit, travel to the Moon, and orbit it. Today is also the Winter Solstice! ❄️ #Apollo8 #Solstice
+Dec 22, 14:28:50 UTC, tweet posted successfully | In 2015, SpaceX achieved a major milestone by successfully landing a Falcon 9 first-stage booster for the first time after an orbital launch. 🚀 #SpaceX
