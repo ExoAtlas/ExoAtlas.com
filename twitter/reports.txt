@@ -148,3 +148,4 @@ Dec 20, 14:25:03 UTC, tweet posted successfully | In 2019, the United States Spa
 Dec 21, 14:25:12 UTC, tweet posted successfully | On this day in 1968, Apollo 8 launched, becoming the first crewed mission to leave Earth orbit, travel to the Moon, and orbit it. Today is also the Winter Solstice! ❄️ #Apollo8 #Solstice
 Dec 22, 14:28:50 UTC, tweet posted successfully | In 2015, SpaceX achieved a major milestone by successfully landing a Falcon 9 first-stage booster for the first time after an orbital launch. 🚀 #SpaceX
 Dec 23, 14:29:16 UTC, tweet posted successfully | On this day in 1672, astronomer Giovanni Cassini discovered Rhea, the second-largest moon of Saturn. #Rhea #Saturn
+Dec 24, 14:27:38 UTC, tweet posted successfully | In 1968, the crew of Apollo 8 entered orbit around the Moon and delivered their famous Christmas Eve broadcast, reading from the Book of Genesis and showing humanity the first live images of an Earthrise. 🌍 #Apollo8
