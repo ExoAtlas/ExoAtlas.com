@@ -151,3 +151,4 @@ Dec 23, 14:29:16 UTC, tweet posted successfully | On this day in 1672, astronome
 Dec 24, 14:27:38 UTC, tweet posted successfully | In 1968, the crew of Apollo 8 entered orbit around the Moon and delivered their famous Christmas Eve broadcast, reading from the Book of Genesis and showing humanity the first live images of an Earthrise. 🌍 #Apollo8
 Dec 25, 14:27:24 UTC, tweet posted successfully | On this day in 2021, the James Webb Space Telescope was launched! On this day in 2004, the Huygens probe separated from Cassini to begin its journey to Titan. Happy birthday to Isaac Newton (born 1642)! 🎄 #JWST #Newton
 Dec 26, 14:28:01 UTC, tweet posted successfully | In 1974, the Soviet Salyut 4 space station was launched. It would host two crews for a total of 93 days. #Salyut4
+Dec 27, 14:25:39 UTC, tweet posted successfully | Happy birthday to Johannes Kepler (born 1571), the German astronomer who discovered the laws of planetary motion. #Kepler
